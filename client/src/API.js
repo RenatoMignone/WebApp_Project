@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+// API Module
+// -----------------------------------------------------------------------------
+// This file defines the API module, which provides functions to interact with
+// the server. It includes methods for managing posts, comments, authentication,
+// and 2FA.
+// -----------------------------------------------------------------------------
+
 import dayjs from 'dayjs';
 
 const SERVER_URL = 'http://localhost:3001/api/';
@@ -31,6 +39,7 @@ function getJson(httpResponsePromise) {
 
 // --- POSTS ---
 
+// Fetch all posts from the server
 const getPosts = async () => {
   return getJson(
     fetch(SERVER_URL + 'posts', { credentials: 'include' })
@@ -40,6 +49,7 @@ const getPosts = async () => {
   })));
 };
 
+// Fetch a single post by ID
 const getPost = async (id) => {
   return getJson(
     fetch(SERVER_URL + `posts/${id}`, { credentials: 'include' })
@@ -49,6 +59,7 @@ const getPost = async (id) => {
   }));
 };
 
+// Add a new post to the server
 const addPost = async (post) => {
   return getJson(
     fetch(SERVER_URL + 'posts', {
@@ -60,6 +71,7 @@ const addPost = async (post) => {
   );
 };
 
+// Delete a post by ID
 const deletePost = async (id) => {
   return getJson(
     fetch(SERVER_URL + `posts/${id}`, {
@@ -71,6 +83,7 @@ const deletePost = async (id) => {
 
 // --- COMMENTS ---
 
+// Fetch all comments for a specific post
 const getComments = async (postId) => {
   return getJson(
     fetch(SERVER_URL + `posts/${postId}/comments`, { credentials: 'include' })
@@ -80,6 +93,7 @@ const getComments = async (postId) => {
   })));
 };
 
+// Add a new comment to a post
 const addComment = async (postId, text) => {
   return getJson(
     fetch(SERVER_URL + `posts/${postId}/comments`, {
@@ -91,6 +105,7 @@ const addComment = async (postId, text) => {
   );
 };
 
+// Edit an existing comment by ID
 const editComment = async (commentId, text) => {
   return getJson(
     fetch(SERVER_URL + `comments/${commentId}`, {
@@ -102,6 +117,7 @@ const editComment = async (commentId, text) => {
   );
 };
 
+// Delete a comment by ID
 const deleteComment = async (commentId) => {
   return getJson(
     fetch(SERVER_URL + `comments/${commentId}`, {
@@ -113,6 +129,7 @@ const deleteComment = async (commentId) => {
 
 // --- INTERESTING FLAGS ---
 
+// Mark a comment as interesting
 const setInteresting = async (commentId) => {
   return getJson(
     fetch(SERVER_URL + `comments/${commentId}/interesting`, {
@@ -122,6 +139,7 @@ const setInteresting = async (commentId) => {
   );
 };
 
+// Unmark a comment as interesting
 const unsetInteresting = async (commentId) => {
   return getJson(
     fetch(SERVER_URL + `comments/${commentId}/interesting`, {
@@ -133,6 +151,7 @@ const unsetInteresting = async (commentId) => {
 
 // --- AUTHENTICATION & 2FA ---
 
+// Log in a user with credentials
 const logIn = async (credentials) => {
   return getJson(
     fetch(SERVER_URL + 'sessions', {
@@ -144,6 +163,7 @@ const logIn = async (credentials) => {
   );
 };
 
+// Verify a TOTP code for 2FA
 const logInTotp = async (code) => {
   return getJson(
     fetch(SERVER_URL + 'login-totp', {
@@ -155,6 +175,7 @@ const logInTotp = async (code) => {
   );
 };
 
+// Log out the current user
 const logOut = async () => {
   return getJson(
     fetch(SERVER_URL + 'sessions/current', {
@@ -164,6 +185,7 @@ const logOut = async () => {
   );
 };
 
+// Fetch information about the currently logged-in user
 const getUserInfo = async () => {
   return getJson(
     fetch(SERVER_URL + 'sessions/current', {
@@ -172,6 +194,7 @@ const getUserInfo = async () => {
   );
 };
 
+// Export all API functions
 const API = {
   getPosts,
   getPost,

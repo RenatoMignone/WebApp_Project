@@ -1,29 +1,38 @@
+// -----------------------------------------------------------------------------
+// NavigationBar Component
+// -----------------------------------------------------------------------------
+// This component provides a fixed navigation bar at the top of the application.
+// It displays the app title, user information (if logged in), and login/logout buttons.
+// -----------------------------------------------------------------------------
+
 import React from 'react';
-import { Navbar, Container, Nav, Button } from 'react-bootstrap';
+import { Navbar, Nav, Button, Container } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 function NavigationBar({ user, onLogout }) {
+  const navigate = useNavigate();
+
   return (
-    <Navbar bg="primary" variant="dark" expand="lg" className="mb-4" style={{ position: 'fixed', top: 0, width: '100%', zIndex: 1040 }}>
+    <Navbar bg="primary" variant="dark" expand="lg" fixed="top">
       <Container>
-        <Navbar.Brand href="/">
-          <i className="bi bi-chat-dots"></i> Forum
-        </Navbar.Brand>
-        <Nav className="ms-auto">
-          {user ? (
-            <>
-              <Navbar.Text className="me-3">
-                <i className="bi bi-person-circle"></i> {user.name} ({user.username})
-              </Navbar.Text>
-              <Button variant="outline-light" size="sm" onClick={onLogout}>
-                <i className="bi bi-box-arrow-right"></i> Logout
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline-light" size="sm" href="/login">
-              <i className="bi bi-box-arrow-in-right"></i> Login
-            </Button>
-          )}
-        </Nav>
+        {/* App title */}
+        <Navbar.Brand href="/">Cybersecurity Forum</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="ms-auto">
+            {user ? (
+              <>
+                {/* Display user information */}
+                <Nav.Link disabled>Welcome, {user.name}</Nav.Link>
+                {/* Logout button */}
+                <Button variant="outline-light" onClick={onLogout}>Logout</Button>
+              </>
+            ) : (
+              // Login button for unauthenticated users
+              <Button variant="outline-light" onClick={() => navigate('/login')}>Login</Button>
+            )}
+          </Nav>
+        </Navbar.Collapse>
       </Container>
     </Navbar>
   );

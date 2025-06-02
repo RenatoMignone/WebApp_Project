@@ -1,32 +1,46 @@
+// -----------------------------------------------------------------------------
+// PostList Component
+// -----------------------------------------------------------------------------
+// This component displays a list of posts. It allows users to select a post to
+// view its details and comments. Posts are sorted by timestamp in descending order.
+// -----------------------------------------------------------------------------
+
 import React from 'react';
 import dayjs from 'dayjs';
+import { ListGroup, Badge } from 'react-bootstrap';
 
 function PostList({ posts, onSelect, selectedPost, user }) {
-  const sortedPosts = [...posts].sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp descending
+  // Sort posts by timestamp in descending order
+  const sortedPosts = [...posts].sort((a, b) => b.timestamp - a.timestamp);
+
   return (
     <div>
-      <div className="bg-gradient p-3 rounded-top" style={{ background: 'linear-gradient(90deg, #4f8cff 0%, #4f8cff 100%)', color: '#fff' }}>
+      {/* Header for the posts section */}
+      <div className="bg-gradient p-3 rounded-top text-white" style={{ background: 'linear-gradient(90deg, #4f8cff 0%, #4f8cff 100%)' }}>
         <h5 className="mb-0"><i className="bi bi-list"></i> Posts</h5>
       </div>
-      <ul className="list-group list-group-flush">
+      <ListGroup variant="flush">
         {sortedPosts.map(post => (
-          <li
+          <ListGroup.Item
             key={post.id}
-            className={`list-group-item d-flex justify-content-between align-items-center ${selectedPost && selectedPost.id === post.id ? 'active bg-primary text-white' : ''}`}
-            style={{ cursor: 'pointer', borderBottom: '1px solid #e3e3e3' }}
+            // Highlight the selected post
+            className={`d-flex justify-content-between align-items-center ${selectedPost && selectedPost.id === post.id ? 'active bg-primary text-white' : ''}`}
+            style={{ cursor: 'pointer' }}
             onClick={() => onSelect(post)}
           >
             <div>
+              {/* Display post title, author, and comment count */}
               <span className="fw-bold">{post.title}</span>
               <span className="text-muted ms-2">by {post.author}</span>
-              <span className="ms-2 badge bg-info text-dark">
+              <Badge bg="info" className="ms-2 text-dark">
                 <i className="bi bi-chat-left-text"></i> {post.comments_count}/{post.max_comments ?? '∞'}
-              </span>
+              </Badge>
             </div>
+            {/* Display post timestamp */}
             <span className="text-secondary small">{post.timestamp && dayjs(post.timestamp).format('YYYY-MM-DD HH:mm')}</span>
-          </li>
+          </ListGroup.Item>
         ))}
-      </ul>
+      </ListGroup>
     </div>
   );
 }
