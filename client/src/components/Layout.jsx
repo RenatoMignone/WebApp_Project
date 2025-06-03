@@ -81,19 +81,29 @@ function PostDetailsLayout({
             <AddCommentForm user={user} post={selectedPost} onAddComment={onAddComment} />
           </>
         ) : (
-          <div className="text-center text-secondary py-5">
-            <h3>
-              <i className="bi bi-chat-dots display-4 text-primary"></i>
-            </h3>
-            <h4 className="fw-bold">Welcome to the Forum!</h4>
-            <p className="lead">Select a post from the left to see details and comments.</p>
-            {!user && <p className="mt-3"><i>Login to add posts and interact with comments.</i></p>}
+          <div className="text-center py-5">
+            <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px' }}>
+              <div className="card-body p-5">
+                <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px', background: 'linear-gradient(45deg, #1e40af, #3b82f6)' }}>
+                  <i className="bi bi-chat-dots text-white" style={{ fontSize: '3rem' }}></i>
+                </div>
+                <h3 className="fw-bold mb-3" style={{ color: '#1e40af' }}>Welcome to the Cybersecurity Forum!</h3>
+                <p className="lead text-muted mb-4">Select a post from the sidebar to view details and join the discussion.</p>
+                {!user && (
+                  <div className="alert alert-info border-0 shadow-sm" style={{ borderRadius: '15px' }}>
+                    <i className="bi bi-info-circle-fill me-2"></i>
+                    <strong>Sign in</strong> to create posts and interact with the community.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </Col>
     </Row>
   );
 }
+
 
 // --- Main Forum Layout ---
 function ForumLayout({
@@ -102,6 +112,7 @@ function ForumLayout({
   selectedPost,
   comments,
   message,
+  messageType = 'danger',
   onLogout,
   onAddPost,
   onSelectPost,
@@ -123,7 +134,8 @@ function ForumLayout({
       <Row>
         <Col>
           {message && (
-            <Alert className="my-3" variant="danger" onClose={() => {}} dismissible>
+            <Alert className="my-3 border-0 shadow-sm" variant={messageType} onClose={() => {}} dismissible style={{ borderRadius: '10px' }}>
+              <i className={`bi ${messageType === 'success' ? 'bi-check-circle-fill' : messageType === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-triangle-fill'} me-2`}></i>
               {message}
             </Alert>
           )}
@@ -134,7 +146,7 @@ function ForumLayout({
         <Col xs={12} md={5} lg={4}>
           <div className="sticky-top" style={{ top: '90px' }}>
             {user && <AddPostForm onAdd={onAddPost} />}
-            <div className="card shadow-lg border-0 mt-3" style={{ background: '#f0f4fa' }}>
+            <div className="card shadow-lg border-0 mt-3" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
               <div className="card-body p-0">
                 <PostList
                   posts={posts}

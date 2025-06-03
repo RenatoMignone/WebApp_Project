@@ -31,47 +31,67 @@ function AddPostForm({ onAdd }) {
 
   return (
     // Form container with styling and submission handler
-    <Form onSubmit={handleSubmit} className="card card-body mb-4 shadow border-0" style={{ background: '#e3f0ff' }}>
-      {/* Form header */}
-      <h5 className="mb-3 text-primary"><i className="bi bi-plus-circle"></i> Add Post</h5>
-      {/* Input field for the post title */}
-      <Form.Group className="mb-3">
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="Enter post title"
-          required
-        />
-      </Form.Group>
-      {/* Textarea for the post content */}
-      <Form.Group className="mb-3">
-        <Form.Label>Content</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={4}
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Write your post content"
-          required
-        />
-      </Form.Group>
-      {/* Input field for the optional maximum comments */}
-      <Form.Group className="mb-3">
-        <Form.Label>Max Comments (optional)</Form.Label>
-        <Form.Control
-          type="number"
-          min="1"
-          value={maxComments}
-          onChange={e => setMaxComments(e.target.value)}
-          placeholder="Enter maximum number of comments"
-        />
-      </Form.Group>
-      {/* Submit button */}
-      <Button type="submit" variant="primary">
-        <i className="bi bi-plus-circle"></i> Add Post
-      </Button>
+    <Form onSubmit={handleSubmit} className="card border-0 shadow-lg mb-4" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+      <div className="card-body p-4">
+        {/* Form header */}
+        <h5 className="mb-4 fw-bold" style={{ color: '#1e40af' }}>
+          <i className="bi bi-plus-circle-fill me-2"></i>
+          Create New Post
+        </h5>
+        {/* Input field for the post title */}
+        <Form.Group className="mb-3">
+          <Form.Label className="fw-bold text-dark">Title</Form.Label>
+          <Form.Control
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Enter an engaging post title"
+            required
+            className="border-0 shadow-sm"
+            style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+          />
+        </Form.Group>
+        {/* Textarea for the post content */}
+        <Form.Group className="mb-3">
+          <Form.Label className="fw-bold text-dark">Content</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={4}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Share your thoughts, insights, or questions..."
+            required
+            className="border-0 shadow-sm"
+            style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+          />
+        </Form.Group>
+        {/* Input field for the optional maximum comments */}
+        <Form.Group className="mb-4">
+          <Form.Label className="fw-bold text-dark">Max Comments (optional)</Form.Label>
+          <Form.Control
+            type="number"
+            min="1"
+            value={maxComments}
+            onChange={e => setMaxComments(e.target.value)}
+            placeholder="Leave blank for unlimited"
+            className="border-0 shadow-sm"
+            style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+          />
+        </Form.Group>
+        {/* Submit button */}
+        <Button 
+          type="submit" 
+          className="w-100 fw-bold border-0 shadow-sm"
+          style={{ 
+            borderRadius: '10px',
+            background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)',
+            padding: '12px'
+          }}
+        >
+          <i className="bi bi-send-fill me-2"></i>
+          Publish Post
+        </Button>
+      </div>
     </Form>
   );
 }

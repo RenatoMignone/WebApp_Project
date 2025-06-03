@@ -18,12 +18,23 @@ import { Row, Col } from 'react-bootstrap';
 
 // --- Main App ---
 function App() {
+
+  // User information
   const [user, setUser] = useState(null);
+
+  // If TOTP is required for the user
   const [totpRequired, setTotpRequired] = useState(false);
+
+  // Pending admin user data (for TOTP verification)
+  const [pendingAdminUser, setPendingAdminUser] = useState(null);
+
+  // State for posts, selected post, comments, and messages
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('danger');
+
   const navigate = useNavigate();
 
   // Load posts on mount and whenever a post is added, deleted, or edited
@@ -67,10 +78,12 @@ function App() {
       // Fix: Only set user if TOTP is not required, otherwise only set totpRequired
       if (res.canDoTotp) {
         setTotpRequired(true);
+        setPendingAdminUser(res); // Store the admin user data
         setUser(null); // Do not set user yet, wait for TOTP verification
       } else {
         setUser({ ...res, isTotp: true });
         setTotpRequired(false);
+        setPendingAdminUser(null);
         navigate('/');
       }
       setMessage('');
@@ -83,8 +96,9 @@ function App() {
     try {
       await API.logInTotp(code);
       const u = await API.getUserInfo();
-      setUser(u);
+      setUser(u); // Full admin privileges after TOTP
       setTotpRequired(false);
+      setPendingAdminUser(null);
       setMessage('');
       navigate('/');
     } catch (err) {
@@ -92,10 +106,30 @@ function App() {
     }
   }
 
+  async function handleSkipTotp() {
+    // Allow admin to continue with limited privileges (as regular user)
+    if (pendingAdminUser) {
+      // Set user but mark as having limited privileges (no admin rights)
+      setUser({ 
+        ...pendingAdminUser, 
+        is_admin: false, // Remove admin privileges
+        limited_access: true, // Flag to indicate this is limited access
+        original_admin: true // Remember they were originally an admin
+      });
+      setTotpRequired(false);
+      setPendingAdminUser(null);
+      setMessage('Logged in with limited access. Complete 2FA for full admin privileges.');
+      setMessageType('warning');
+      setTimeout(() => setMessage(''), 2000);
+      navigate('/');
+    }
+  }
+
   async function handleLogout() {
     await API.logOut();
     setUser(null);
     setTotpRequired(false);
+    setPendingAdminUser(null);
     setSelectedPost(null);
     setComments([]);
     setMessage('');
@@ -120,15 +154,20 @@ function App() {
   async function handleAddPost(post) {
     if (!post.title.trim() || !post.text.trim()) {
       setMessage('Title and text are required');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
       return;
     }
     try {
       await API.addPost(post);
       await refreshPosts();
-      setMessage('Post added');
-      setTimeout(() => setMessage(''), 2000); // Clear message after 2 seconds
+      setMessage('Post added successfully!');
+      setMessageType('success');
+      setTimeout(() => setMessage(''), 2000);
     } catch (e) {
       setMessage(e?.response?.data?.error || 'Error adding post');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
     }
   }
 
@@ -138,10 +177,13 @@ function App() {
       await refreshPosts();
       setSelectedPost(null);
       setComments([]);
-      setMessage('Post deleted');
-      setTimeout(() => setMessage(''), 2000); // Clear message after 2 seconds
+      setMessage('Post deleted successfully!');
+      setMessageType('success');
+      setTimeout(() => setMessage(''), 2000);
     } catch (e) {
       setMessage(e?.error || 'Error deleting post');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
     }
   }
 
@@ -151,6 +193,8 @@ function App() {
   async function handleAddComment(postId, text) {
     if (!text.trim()) {
       setMessage('Comment text is required');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
       return;
     }
     try {
@@ -159,7 +203,9 @@ function App() {
         const comms = await API.getComments(postId);
         setComments(comms);
       }
-      setMessage('Comment added');
+      setMessage('Comment added successfully!');
+      setMessageType('success');
+      setTimeout(() => setMessage(''), 2000);
       // Dynamically update the comment count for the post in the posts array
       setPosts(posts =>
         posts.map(p =>
@@ -170,12 +216,16 @@ function App() {
       );
     } catch (e) {
       setMessage(e?.response?.data?.error || 'Error adding comment');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
     }
   }
 
   async function handleEditComment(commentId, text) {
     if (!text.trim()) {
       setMessage('Comment text is required');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
       return;
     }
     try {
@@ -184,9 +234,13 @@ function App() {
         const comms = await API.getComments(selectedPost.id);
         setComments(comms);
       }
-      setMessage('Comment edited');
+      setMessage('Comment edited successfully!');
+      setMessageType('success');
+      setTimeout(() => setMessage(''), 2000);
     } catch (e) {
       setMessage(e?.response?.data?.error || 'Error editing comment');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
     }
   }
 
@@ -204,10 +258,13 @@ function App() {
           )
         );
       }
-      setMessage('Comment deleted');
-      setTimeout(() => setMessage(''), 2000); // Clear message after 2 seconds
+      setMessage('Comment deleted successfully!');
+      setMessageType('success');
+      setTimeout(() => setMessage(''), 2000);
     } catch (e) {
       setMessage(e?.response?.data?.error || 'Error deleting comment');
+      setMessageType('danger');
+      setTimeout(() => setMessage(''), 2000);
     }
   }
 
@@ -237,7 +294,7 @@ function App() {
 
   // --- Routing ---
   return (
-    <div className="px-3 py-4" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e3f0ff 0%, #fafcff 100%)' }}>
+    <div className="px-3 py-4" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%)' }}>
       <Routes>
         <Route
           path="/login"
@@ -247,9 +304,14 @@ function App() {
             ) : (
               <Row className="justify-content-center">
                 <Col xs={12} sm={10} md={8} lg={5}>
-                  <div className="card shadow-lg border-0" style={{ background: '#f8f9fa' }}>
+                  <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
                     <div className="card-body">
-                      <LoginForm onLogin={handleLogin} totpRequired={totpRequired} onTotp={handleTotp} />
+                      <LoginForm 
+                        onLogin={handleLogin} 
+                        totpRequired={totpRequired} 
+                        onTotp={handleTotp}
+                        onSkipTotp={handleSkipTotp}
+                      />
                     </div>
                   </div>
                 </Col>
@@ -262,8 +324,16 @@ function App() {
           element={
             <Row className="justify-content-center mt-5">
               <Col xs={12} md={8} className="text-center">
-                <h2 className="text-danger">404 - Page Not Found</h2>
-                <a href="/" className="btn btn-primary mt-3">Go to Posts</a>
+                <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+                  <div className="card-body p-5">
+                    <h2 className="text-danger mb-4">
+                      <i className="bi bi-exclamation-triangle-fill"></i> 404 - Page Not Found
+                    </h2>
+                    <a href="/" className="btn btn-primary btn-lg" style={{ borderRadius: '25px' }}>
+                      <i className="bi bi-house-fill"></i> Go to Posts
+                    </a>
+                  </div>
+                </div>
               </Col>
             </Row>
           }
@@ -277,6 +347,7 @@ function App() {
               selectedPost={selectedPost}
               comments={comments}
               message={message}
+              messageType={messageType}
               onLogout={handleLogout}
               onAddPost={handleAddPost}
               onSelectPost={handleSelectPost}

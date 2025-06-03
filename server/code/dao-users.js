@@ -1,6 +1,8 @@
 const db = require('./db');
 const crypto = require('crypto');
 
+
+
 exports.getUserById = (id) => {
   return new Promise((resolve, reject) => {
     const sql = `

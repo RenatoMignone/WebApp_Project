@@ -26,23 +26,44 @@ function AddCommentForm({ user, post, onAddComment }) {
 
 
   return (
-    <Form className="mb-2 mt-3" onSubmit={handleSubmit}>
-      <InputGroup>
-        {/* Textarea for entering the comment */}
-        <Form.Control
-          as="textarea"
-          value={text}                                                            // Bind the textarea value to the state
-          onChange={e => setText(e.target.value)}                                 // Update state as the user types
-          placeholder={user ? "Add a comment..." : "Add an anonymous comment..."} // Dynamic placeholder based on user authentication
-          required
-          rows={2} 
-        />
-        {/* Submit button */}
-        <Button variant="info" type="submit" className="text-white">
-          <i className="bi bi-send"></i> {user ? "Add Comment" : "Add Anonymous Comment"} 
-        </Button>
-      </InputGroup>
-    </Form>
+    <div className="mt-4">
+      <div className="card border-0 shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+        <div className="card-body p-4">
+          <h6 className="mb-3 fw-bold" style={{ color: '#1e40af' }}>
+            <i className="bi bi-chat-left-dots-fill me-2"></i>
+            {user ? "Add Your Comment" : "Add Anonymous Comment"}
+          </h6>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group className="mb-3">
+              {/* Textarea for entering the comment */}
+              <Form.Control
+                as="textarea"
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder={user ? "Share your thoughts..." : "Share your thoughts anonymously..."}
+                required
+                rows={3}
+                className="border-0 shadow-sm"
+                style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+              />
+            </Form.Group>
+            {/* Submit button */}
+            <Button 
+              type="submit" 
+              className="fw-bold border-0 shadow-sm"
+              style={{ 
+                borderRadius: '20px',
+                background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)',
+                padding: '8px 20px'
+              }}
+            >
+              <i className="bi bi-send-fill me-2"></i>
+              {user ? "Post Comment" : "Post Anonymously"}
+            </Button>
+          </Form>
+        </div>
+      </div>
+    </div>
   );
 }
 

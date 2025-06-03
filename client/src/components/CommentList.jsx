@@ -46,75 +46,120 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
   return (
     <div className="mt-4">
       {/* Header for the comments section */}
-      <div className="bg-gradient p-2 rounded-top" style={{ background: 'linear-gradient(90deg, #6fd6ff 0%, #4f8cff 100%)', color: '#fff' }}>
-        <h5 className="mb-0"><i className="bi bi-chat-left-text"></i> Comments</h5>
+      <div className="p-3 rounded-top text-white shadow-sm" style={{ background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)' }}>
+        <h5 className="mb-0 fw-bold">
+          <i className="bi bi-chat-left-text me-2"></i>
+          Comments ({comments.length})
+        </h5>
       </div>
-      <ListGroup className="mb-3">
-        {sortedComments.map(c => (
-          <ListGroup.Item key={c.id} className="d-flex justify-content-between align-items-start" style={{ background: '#f8faff' }}>
-            <div style={{ flex: 1 }}>
-              {/* Render the comment text or an editing form */}
-              {editingId === c.id ? (
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    saveEdit(c.id);
-                  }}
-                >
-                  {/* Textarea for editing the comment */}
-                  <textarea
-                    className="form-control mb-2"
-                    value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                    rows={2}
-                    autoFocus
-                  />
-                  <div>
-                    {/* Buttons to save or cancel editing */}
-                    <Button type="submit" variant="success" size="sm" className="me-2">
-                      Save
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={cancelEdit}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <>
-                  {/* Display the comment text */}
-                  <span style={{ whiteSpace: 'pre-line' }}>{c.text}</span>
-                  <br />
-                  <small className="text-muted">
-                    {/* Display author and timestamp */}
-                    {c.author ? `by ${c.author}` : 'anonymous'} - {c.timestamp && dayjs(c.timestamp).format('YYYY-MM-DD HH:mm')}
-                    {' | '}Interesting: {c.interesting_count}
-                  </small>
-                </>
-              )}
-            </div>
-            <div className="btn-group btn-group-sm ms-2">
-              {/* Buttons for marking as interesting, editing, or deleting */}
-              {user && (
-                c.interesting
-                  ? <Button variant="warning" size="sm" title="Unflag" onClick={() => onUnsetInteresting(c.id)}><i className="bi bi-star-fill"></i></Button>
-                  : <Button variant="outline-warning" size="sm" title="Flag as interesting" onClick={() => onSetInteresting(c.id)}><i className="bi bi-star"></i></Button>
-              )}
-              {user && (user.id === c.author_id || (user.is_admin && user.isTotp)) && (
-                <>
-                  {editingId === c.id ? null : (
-                    <Button variant="outline-primary" size="sm" title="Edit" onClick={() => startEdit(c)}>
-                      <i className="bi bi-pencil"></i>
+      <div className="border-0 shadow-sm" style={{ background: '#ffffff', borderRadius: '0 0 15px 15px' }}>
+        {sortedComments.map((c, index) => (
+          <div 
+            key={c.id} 
+            className={`p-4 ${index < sortedComments.length - 1 ? 'border-bottom' : ''}`}
+            style={{ 
+              borderBottomColor: '#e5e7eb',
+              borderBottomWidth: '1px',
+              borderBottomStyle: 'solid'
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-start">
+              <div style={{ flex: 1 }}>
+                {/* Render the comment text or an editing form */}
+                {editingId === c.id ? (
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      saveEdit(c.id);
+                    }}
+                  >
+                    {/* Textarea for editing the comment */}
+                    <textarea
+                      className="form-control mb-3 border-0 shadow-sm"
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={3}
+                      autoFocus
+                      style={{ borderRadius: '10px', background: '#f8fafc' }}
+                    />
+                    <div>
+                      {/* Buttons to save or cancel editing */}
+                      <Button type="submit" variant="success" size="sm" className="me-2" style={{ borderRadius: '20px' }}>
+                        <i className="bi bi-check-lg me-1"></i>
+                        Save
+                      </Button>
+                      <Button variant="outline-secondary" size="sm" onClick={cancelEdit} style={{ borderRadius: '20px' }}>
+                        <i className="bi bi-x-lg me-1"></i>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    {/* Display the comment text */}
+                    <div className="mb-2" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{c.text}</div>
+                    <div className="d-flex align-items-center text-muted small">
+                      {/* Display author and timestamp */}
+                      <div className="d-flex align-items-center me-3">
+                        <i className="bi bi-person-circle me-1"></i>
+                        <span className="fw-medium">{c.author || 'Anonymous'}</span>
+                      </div>
+                      <div className="d-flex align-items-center me-3">
+                        <i className="bi bi-clock me-1"></i>
+                        <span>{c.timestamp && dayjs(c.timestamp).format('MMM DD, YYYY HH:mm')}</span>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <i className="bi bi-star-fill me-1 text-warning"></i>
+                        <span className="fw-medium">{c.interesting_count}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="ms-3">
+                {/* Buttons for marking as interesting, editing, or deleting */}
+                <div className="d-flex gap-1">
+                  {user && (
+                    <Button
+                      variant={c.interesting ? "warning" : "outline-warning"}
+                      size="sm"
+                      title={c.interesting ? "Remove from interesting" : "Mark as interesting"}
+                      onClick={() => c.interesting ? onUnsetInteresting(c.id) : onSetInteresting(c.id)}
+                      style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
+                    >
+                      <i className={`bi ${c.interesting ? 'bi-star-fill' : 'bi-star'}`}></i>
                     </Button>
                   )}
-                  <Button variant="outline-danger" size="sm" title="Delete" onClick={() => onDeleteComment(c.id)}>
-                    <i className="bi bi-trash"></i>
-                  </Button>
-                </>
-              )}
+                  {user && (user.id === c.author_id || (user.is_admin && user.isTotp)) && (
+                    <>
+                      {editingId === c.id ? null : (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          title="Edit comment"
+                          onClick={() => startEdit(c)}
+                          style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        title="Delete comment"
+                        onClick={() => onDeleteComment(c.id)}
+                        style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-          </ListGroup.Item>
+          </div>
         ))}
-      </ListGroup>
+      </div>
     </div>
   );
 }

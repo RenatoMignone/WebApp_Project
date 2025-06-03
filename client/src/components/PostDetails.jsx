@@ -22,14 +22,20 @@ function PostDetails({ post, user, onDeletePost }) {
 
   return (
     <div className="mt-4 px-3">
-      <Card className="mb-3 border-3 border-primary" style={{ background: '#f8faff' }}>
-        <Card.Header className="d-flex justify-content-between align-items-center bg-primary bg-gradient text-white">
-          <span className="fw-bold">{post.title}</span>
+      <Card className="mb-3 border-0 shadow-lg" style={{ background: '#ffffff', borderRadius: '15px' }}>
+        <Card.Header className="d-flex justify-content-between align-items-center text-white border-0" style={{ background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)', borderRadius: '15px 15px 0 0' }}>
+          <div>
+            <h4 className="mb-1 fw-bold">{post.title}</h4>
+            <small className="opacity-75">
+              <i className="bi bi-person-fill me-1"></i>
+              by {post.author}
+            </small>
+          </div>
           {onDeletePost && (
             <>
               {/* Button to trigger the delete confirmation modal */}
               <Button
-                variant="danger"
+                variant={canDelete ? "danger" : "outline-secondary"}
                 size="sm"
                 onClick={() => canDelete && setShowModal(true)}
                 disabled={!canDelete}
@@ -38,22 +44,27 @@ function PostDetails({ post, user, onDeletePost }) {
                     ? "Delete Post"
                     : "You are not allowed to delete this post"
                 }
+                style={{ borderRadius: '20px' }}
               >
-                <i className="bi bi-trash"></i> Delete Post
+                <i className="bi bi-trash me-1"></i> Delete
               </Button>
               {/* Delete confirmation modal */}
               <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                  <Modal.Title>Confirm Delete</Modal.Title>
+                <Modal.Header closeButton style={{ background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)', color: 'white', border: 'none' }}>
+                  <Modal.Title>
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    Confirm Delete
+                  </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                  Are you sure you want to delete this post?
+                <Modal.Body className="p-4">
+                  <p className="mb-0">Are you sure you want to delete this post? This action cannot be undone.</p>
                 </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={() => setShowModal(false)}>
+                <Modal.Footer className="border-0">
+                  <Button variant="outline-secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '20px' }}>
                     Cancel
                   </Button>
-                  <Button variant="danger" onClick={() => { setShowModal(false); onDeletePost(post.id); }}>
+                  <Button variant="danger" onClick={() => { setShowModal(false); onDeletePost(post.id); }} style={{ borderRadius: '20px' }}>
+                    <i className="bi bi-trash me-1"></i>
                     Delete
                   </Button>
                 </Modal.Footer>
@@ -61,12 +72,26 @@ function PostDetails({ post, user, onDeletePost }) {
             </>
           )}
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="p-4">
           {/* Display post details */}
-          <div className="mb-2"><i className="bi bi-person"></i> <span className="fw-bold">{post.author}</span></div>
-          <div className="mb-2"><i className="bi bi-calendar"></i> {post.timestamp && dayjs(post.timestamp).format('YYYY-MM-DD HH:mm')}</div>
-          <div className="mb-2"><i className="bi bi-chat-left-text"></i> Max Comments: {post.max_comments ?? '∞'}</div>
-          <div style={{ whiteSpace: 'pre-line' }}>{post.text}</div>
+          <div className="mb-3">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="d-flex align-items-center text-muted">
+                  <i className="bi bi-calendar3 me-2 text-primary"></i>
+                  <span>{post.timestamp && dayjs(post.timestamp).format('YYYY-MM-DD HH:mm')}</span>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="d-flex align-items-center text-muted">
+                  <i className="bi bi-chat-left-text me-2 text-primary"></i>
+                  <span>Max Comments: {post.max_comments ?? '∞'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr className="my-3" />
+          <div className="fs-6" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{post.text}</div>
         </Card.Body>
       </Card>
     </div>

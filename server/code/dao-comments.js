@@ -78,3 +78,50 @@ exports.deleteComment = (id, user_id, is_admin) => {
     });
   });
 };
+
+// Get all comments for a specific post (with optional user authentication)
+exports.getCommentsByPost = (postId, userId = null) => {
+  return new Promise((resolve, reject) => {
+    let sql;
+    let params;
+    
+    if (userId) {
+      // Authenticated user - include interesting flag
+      sql = `
+        SELECT c.*, u.name as author,
+               CASE WHEN f.user_id IS NOT NULL THEN 1 ELSE 0 END as interesting,
+               COUNT(f2.user_id) as interesting_count
+        FROM comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN comment_interesting_flags f ON c.id = f.comment_id AND f.user_id = ?
+        LEFT JOIN comment_interesting_flags f2 ON c.id = f2.comment_id
+        WHERE c.post_id = ?
+        GROUP BY c.id, f.user_id
+        ORDER BY c.timestamp DESC
+      `;
+      params = [userId, postId];
+    } else {
+      // Unauthenticated user - no interesting flag
+      sql = `
+        SELECT c.*, u.name as author,
+               0 as interesting,
+               COUNT(f.user_id) as interesting_count
+        FROM comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN comment_interesting_flags f ON c.id = f.comment_id
+        WHERE c.post_id = ?
+        GROUP BY c.id
+        ORDER BY c.timestamp DESC
+      `;
+      params = [postId];
+    }
+    
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};

@@ -1,5 +1,6 @@
 'use strict';
 
+// This file sets up an Express server with Passport.js for authentication,
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -18,29 +19,35 @@ const daoFlags = require('./dao-flags');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { check, validationResult } = require('express-validator');
 
+//----------------------------------------------------------------------------
+// Create the Express app and configure middleware
 const app = express();
 const port = 3001;
 
+//----------------------------------------------------------------------------
+// Middleware setup
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Enable CORS for the frontend communication
 const corsOptions = {
   origin: 'http://localhost:5173',
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-// --- Session and Passport setup ---
-
+///----------------------------------------------------------------------------
+// Session management with SQLite store
 app.use(session({
   secret: "secret",
   resave: false,
   saveUninitialized: false,
-  cookie: { sameSite: 'lax' } // ensures cookie is sent for local dev
 }));
 app.use(passport.authenticate('session'));
 
-// --- Passport Local Strategy ---
+//----------------------------------------------------------------------------
+// Initialize Passport.js for authentication
+// The local strategy is used for username/password authentication
 passport.use(new LocalStrategy(
   function(username, password, done) {
     daoUsers.getUser(username, password)
@@ -52,7 +59,8 @@ passport.use(new LocalStrategy(
   }
 ));
 
-// --- Passport TOTP Strategy for 2FA ---
+//----------------------------------------------------------------------------
+// The TOTP strategy is used for two-factor authentication (2FA)
 passport.use(new TotpStrategy(
   function(user, done) {
     // Only enable TOTP if user has otp_secret (admin users)
@@ -61,7 +69,8 @@ passport.use(new TotpStrategy(
   }
 ));
 
-// --- Passport session serialization ---
+//----------------------------------------------------------------------------
+// Serialize and deserialize user instances to support sessions
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
@@ -71,17 +80,20 @@ passport.deserializeUser((id, done) => {
     .catch(err => done(err, null));
 });
 
-// --- Middleware for authentication and admin 2FA ---
+//----------------------------------------------------------------------------
+// middleware to check if user is authenticated
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
   return res.status(401).json({ error: 'Not authenticated' });
 }
 
+// middleware to check if user is admin and has completed 2FA to unlock admin features
 function isAdmin2FA(req, res, next) {
   if (req.user && req.user.is_admin && req.session.secondFactor === 'totp') return next();
   return res.status(403).json({ error: 'Admin 2FA required' });
 }
 
+//----------------------------------------------------------------------------
 // Helper to send user info to client, including isTotp
 function clientUserInfo(req) {
   const user = req.user;
@@ -95,7 +107,9 @@ function clientUserInfo(req) {
   };
 }
 
-// --- Authentication APIs ---
+
+//#############################################################################
+// Authentication APIs
 
 // Login (username/password)
 app.post('/api/sessions', function(req, res, next) {
@@ -126,11 +140,14 @@ app.post('/api/sessions', function(req, res, next) {
   })(req, res, next);
 });
 
+//----------------------------------------------------------------------------
 // TOTP verification (2FA)
 app.post('/api/login-totp', isLoggedIn, function(req, res, next) {
+  
   if (!req.user.otp_secret) {
     return res.status(400).json({ error: 'TOTP not enabled for this user' });
   }
+
   passport.authenticate('totp', function(err, user, info) {
     if (err) return next(err);
     if (!user) return res.status(401).json({ error: 'Invalid TOTP code' });
@@ -138,8 +155,10 @@ app.post('/api/login-totp', isLoggedIn, function(req, res, next) {
     req.session.secondFactor = 'totp';
     return res.json({ success: true });
   })(req, res, next);
+
 });
 
+//----------------------------------------------------------------------------
 // Get current session info
 app.get('/api/sessions/current', (req, res) => {
   if (req.isAuthenticated()) {
@@ -149,14 +168,17 @@ app.get('/api/sessions/current', (req, res) => {
   }
 });
 
-// Logout
+//----------------------------------------------------------------------------
+// Logout, the user is logged out and the session is destroyed
 app.delete('/api/sessions/current', (req, res) => {
   req.logout(() => {
     req.session.destroy(() => res.status(204).end());
   });
 });
 
-// --- Forum APIs ---
+
+//#############################################################################
+// Forum APIs
 
 // List all posts (public)
 app.get('/api/posts', async (req, res) => {
@@ -168,6 +190,7 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 // Get post by id (public)
 app.get('/api/posts/:id', async (req, res) => {
   try {
@@ -179,17 +202,21 @@ app.get('/api/posts/:id', async (req, res) => {
   }
 });
 
-// List comments for a post (only for authenticated users)
-app.get('/api/posts/:id/comments', isLoggedIn, async (req, res) => {
+//----------------------------------------------------------------------------
+// GET /api/posts/:id/comments - Get comments for a specific post (no authentication required)
+app.get('/api/posts/:id/comments', async (req, res) => {
   try {
-    const user_id = req.user.id;
-    const comments = await daoComments.listCommentsByPost(req.params.id, user_id);
+    const postId = parseInt(req.params.id);
+    const userId = req.user?.id || null; // Get user ID if authenticated, null otherwise
+    const comments = await daoComments.getCommentsByPost(postId, userId);
     res.json(comments);
   } catch (err) {
-    res.status(500).json({ error: 'Database error' });
+    console.error('Error getting comments:', err);
+    res.status(500).json({ error: 'Failed to get comments' });
   }
 });
 
+//----------------------------------------------------------------------------
 // Add a post (authenticated only)
 app.post('/api/posts', 
   isLoggedIn,
@@ -219,7 +246,8 @@ app.post('/api/posts',
     }
 });
 
-// Delete a post (author or admin with 2FA)
+//----------------------------------------------------------------------------
+// DELETE /api/posts/:id - Delete a post (admin with 2FA only)
 app.delete('/api/posts/:id', isLoggedIn, async (req, res) => {
   try {
     const post = await daoPosts.getPostById(req.params.id);
@@ -234,6 +262,7 @@ app.delete('/api/posts/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 // Add a comment (anyone, anonymous if not logged in)
 app.post('/api/posts/:id/comments', async (req, res) => {
   try {
@@ -256,6 +285,7 @@ app.post('/api/posts/:id/comments', async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 // Edit a comment (author or admin with 2FA)
 app.put('/api/comments/:id', isLoggedIn, async (req, res) => {
   try {
@@ -270,7 +300,8 @@ app.put('/api/comments/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Delete a comment (author or admin with 2FA)
+//----------------------------------------------------------------------------
+// DELETE /api/comments/:id - Delete a comment (admin with 2FA only)
 app.delete('/api/comments/:id', isLoggedIn, async (req, res) => {
   try {
     const is_admin = req.user.is_admin && req.session.secondFactor === 'totp';
@@ -282,6 +313,7 @@ app.delete('/api/comments/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 // Mark/unmark comment as interesting (authenticated only)
 app.post('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
@@ -291,6 +323,9 @@ app.post('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
+//----------------------------------------------------------------------------
+// Remove interesting mark from comment (authenticated only)
 app.delete('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
     await daoFlags.removeFlag(req.user.id, req.params.id);
@@ -300,9 +335,8 @@ app.delete('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
-
-// Install speakeasy in your server directory:
-// npm install speakeasy
+//----------------------------------------------------------------------------

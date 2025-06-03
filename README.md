@@ -1,75 +1,118 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/6EO6Vzam)
-# Exam #1234: "Forum Web Application"
-## Student: s123456 LASTNAME FIRSTNAME 
+# Cybersecurity Forum
 
-## React Client Application Routes
+A full-stack web application for a cybersecurity forum where users can create posts, comment, and interact with the community. Features user authentication, admin privileges, and 2FA support.
 
-- Route `/`: List of all posts (title, author, comments count/max)
-- Route `/posts/:id`: Post details and comments (chronological order)
-- Route `/login`: Login page (with 2FA for admins)
-- Route `/add-post`: Add new post (authenticated users)
-- Route `/edit-comment/:id`: Edit comment (author/admin only)
-- ...
+## Server-side
 
-## API Server
+### HTTP APIs
 
-- POST `/api/login`
-  - { username, password, [otp] }
-  - { user info }
-- GET `/api/posts`
-  - none
-  - [{ post info }]
-- GET `/api/posts/:id/comments`
-  - none
-  - [{ comment info }]
-- POST `/api/posts`
-  - { title, text, max_comments }
-  - { post info }
-- POST `/api/comments`
-  - { post_id, text }
-  - { comment info }
-- PUT `/api/comments/:id`
-  - { text }
-  - { comment info }
-- DELETE `/api/posts/:id`
-  - none
-  - { result }
-- DELETE `/api/comments/:id`
-  - none
-  - { result }
-- POST `/api/comments/:id/interesting`
-  - none
-  - { result }
-- DELETE `/api/comments/:id/interesting`
-  - none
-  - { result }
-- ...
+#### Authentication
+- `POST /api/sessions` - User login (username, password) → Returns user object or 2FA requirement
+- `POST /api/login-totp` - TOTP verification (code) → Completes admin authentication
+- `DELETE /api/sessions/current` - User logout
+- `GET /api/sessions/current` - Get current user info → Returns user object
 
-## Database Tables
+#### Posts
+- `GET /api/posts` - Get all posts → Returns array of post objects with metadata
+- `GET /api/posts/:id` - Get single post by ID → Returns post object
+- `POST /api/posts` - Create new post (title, text, max_comments) → Creates post (auth required)
+- `DELETE /api/posts/:id` - Delete post by ID → Success/error (auth required)
 
-- Table `users` - id, username, name, hash, salt, is_admin
-- Table `posts` - id, title, author_id, text, max_comments, timestamp
-- Table `comments` - id, post_id, author_id, text, timestamp
-- Table `comment_interesting_flags` - user_id, comment_id
+#### Comments
+- `GET /api/posts/:postId/comments` - Get comments for post → Returns array of comment objects
+- `POST /api/posts/:postId/comments` - Add comment (text) → Creates comment
+- `PUT /api/comments/:id` - Edit comment (text) → Updates comment (auth required)
+- `DELETE /api/comments/:id` - Delete comment → Success/error (auth required)
 
-## Main React Components
+#### Interesting Flags
+- `POST /api/comments/:id/interesting` - Mark comment as interesting (auth required)
+- `DELETE /api/comments/:id/interesting` - Remove interesting flag (auth required)
 
-- `PostList` (in `PostList.jsx`): shows all posts
-- `PostDetails` (in `PostDetails.jsx`): shows post and comments
-- `LoginForm` (in `LoginForm.jsx`): login and 2FA
-- `AddPostForm` (in `AddPostForm.jsx`): add post
-- `CommentForm` (in `CommentForm.jsx`): add/edit comment
-- ...
+### Database Tables
 
-## Screenshot
+#### users
+- `id` (INTEGER, PRIMARY KEY) - User unique identifier
+- `username` (TEXT, UNIQUE) - User login name
+- `name` (TEXT) - Display name
+- `hash` (TEXT) - Password hash
+- `salt` (TEXT) - Password salt
+- `is_admin` (INTEGER) - Admin flag (0/1)
+- `totp_secret` (TEXT) - 2FA secret key
 
-![Screenshot](./img/screenshot.png)
+#### posts
+- `id` (INTEGER, PRIMARY KEY) - Post unique identifier
+- `title` (TEXT) - Post title
+- `text` (TEXT) - Post content
+- `author_id` (INTEGER, FOREIGN KEY) - Reference to users.id
+- `timestamp` (TEXT) - Creation timestamp
+- `max_comments` (INTEGER) - Maximum allowed comments (NULL = unlimited)
 
-## Users Credentials
+#### comments
+- `id` (INTEGER, PRIMARY KEY) - Comment unique identifier
+- `text` (TEXT) - Comment content
+- `author_id` (INTEGER, FOREIGN KEY) - Reference to users.id (NULL for anonymous)
+- `post_id` (INTEGER, FOREIGN KEY) - Reference to posts.id
+- `timestamp` (TEXT) - Creation timestamp
 
-- user1, pwd1 (user)
-- user2, pwd2 (user)
-- admin1, pwdadmin1 (admin, 2FA: LXBSMDTMSP2I5XFXIYRGFVWSFI)
-- admin2, pwdadmin2 (admin, 2FA: LXBSMDTMSP2I5XFXIYRGFVWSFI)
-- ...
+#### flags
+- `id` (INTEGER, PRIMARY KEY) - Flag unique identifier
+- `user_id` (INTEGER, FOREIGN KEY) - Reference to users.id
+- `comment_id` (INTEGER, FOREIGN KEY) - Reference to comments.id
+- `UNIQUE(user_id, comment_id)` - One flag per user per comment
+
+## Client-side
+
+### Routes
+
+- `/` - Main forum page with post list and details view
+- `/login` - User authentication page with 2FA support
+- `*` - 404 Not Found page for invalid routes
+
+### Main React Components
+
+#### App.jsx
+Main application component managing global state, authentication, and routing logic.
+
+#### Layout.jsx
+- `ForumLayout` - Main forum layout with navigation, post list, and detail sections
+- `NotFoundLayout` - 404 error page layout
+
+#### Authentication
+- `LoginForm` - User login form with username/password and TOTP verification
+- `NavigationBar` - Top navigation with user info and logout functionality
+
+#### Posts
+- `PostList` - Sidebar list of all forum posts with selection capability
+- `PostDetails` - Detailed view of selected post with delete functionality
+- `AddPostForm` - Form for creating new posts with title, content, and max comments
+
+#### Comments
+- `CommentList` - Display all comments for a post with edit/delete/interesting actions
+- `AddCommentForm` - Form for adding comments (authenticated or anonymous)
+
+## Screenshots
+
+![Post Creation Page](./screenshots/post-creation.png)
+
+## Test Users
+
+| Username | Password | Role | 2FA Enabled |
+|----------|----------|------|-------------|
+| Ren | pwd | Administrator | Yes |
+| Elia | pwd | Regular User | No |
+| Simone | pwd | Administrator | Yes |
+| Andrea | pwd | Regular User | No |
+| Alice | pwd | Regular User | No |
+
+
+### Admin Features
+- Admin users must complete 2FA for full privileges
+- Can skip 2FA to continue with limited access (regular user permissions)
+- Full admin access allows deleting any post/comment
+
+### Anonymous Features
+- Can view all posts and comments
+- Can add anonymous comments to posts
+- Cannot create posts or mark comments as interesting
 
