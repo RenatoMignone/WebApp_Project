@@ -8,8 +8,8 @@
 // - Commenting can be disabled by the post author (max_comments = 0).
 // -----------------------------------------------------------------------------
 
-import React, { useState } from 'react';
-import { Form, InputGroup, Button } from 'react-bootstrap';
+import { useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
 
 function AddCommentForm({ user, post, onAddComment }) {
   // State to manage the text input for the comment
@@ -35,9 +35,6 @@ function AddCommentForm({ user, post, onAddComment }) {
       <div className="mt-4">
         <div className="card border-0 shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
           <div className="card-body p-4 text-center">
-            <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '60px', height: '60px', background: 'linear-gradient(45deg, #dc2626, #ef4444)' }}>
-              <i className="bi bi-chat-slash-fill text-white" style={{ fontSize: '1.5rem' }}></i>
-            </div>
             <h6 className="mb-2 fw-bold text-muted">
               Comments Disabled
             </h6>
@@ -51,13 +48,18 @@ function AddCommentForm({ user, post, onAddComment }) {
   }
 
   return (
+    // THis classname is used to style the form container
     <div className="mt-4">
+      {/* Card to contain the comment form */}
       <div className="card border-0 shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
         <div className="card-body p-4">
+          {/* Header for the comment form */}
           <h6 className="mb-3 fw-bold" style={{ color: '#1e40af' }}>
             <i className="bi bi-chat-left-dots-fill me-2"></i>
             {user ? "Add Your Comment" : "Add Anonymous Comment"}
           </h6>
+
+          {/* Form for adding a comment */}
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
               {/* Textarea for entering the comment */}
@@ -65,6 +67,7 @@ function AddCommentForm({ user, post, onAddComment }) {
                 as="textarea"
                 value={text}
                 onChange={e => setText(e.target.value)}
+                // If the user is authenticated, use a different placeholder
                 placeholder={user ? "Share your thoughts..." : "Share your thoughts anonymously..."}
                 required
                 rows={3}
@@ -72,6 +75,7 @@ function AddCommentForm({ user, post, onAddComment }) {
                 style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
               />
             </Form.Group>
+            
             {/* Submit button */}
             <Button 
               type="submit" 
