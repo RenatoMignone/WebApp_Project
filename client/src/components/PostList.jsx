@@ -69,7 +69,7 @@ function PostList({ posts, onSelect, selectedPost, user }) {
             {/* Display post timestamp */}
             <div className="text-end">
               <span className={`small ${selectedPost?.id === post.id ? 'text-light' : 'text-secondary'}`}>
-                {post.timestamp && dayjs(post.timestamp).format('MMM DD')}
+                {post.timestamp && dayjs(post.timestamp).format('MMM DD, YYYY')}
                 <br />
                 {post.timestamp && dayjs(post.timestamp).format('HH:mm')}
               </span>

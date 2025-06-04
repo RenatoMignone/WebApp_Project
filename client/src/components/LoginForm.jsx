@@ -14,15 +14,46 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = event => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (totpRequired) {
-      onTotp(totpCode).catch(() => setErrorMessage('Invalid TOTP code'));
-    } else {
-      onLogin({ username, password }).catch(() => setErrorMessage('Invalid credentials'));
+    setErrorMessage(''); // Clear any previous errors
+    setIsLoading(true);
+    
+    try {
+      if (totpRequired) {
+        await onTotp(totpCode);
+      } else {
+        await onLogin({ username, password });
+      }
+    } catch (error) {
+      // Set appropriate error message based on the type of login
+      if (totpRequired) {
+        setErrorMessage('Invalid TOTP code. Please try again.');
+      } else {
+        setErrorMessage('Invalid username or password. Please check your credentials and try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Clear error message when user starts typing
+  const handleUsernameChange = (e) => {
+    setUsername(e.target.value);
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handleTotpChange = (e) => {
+    setTotpCode(e.target.value);
+    if (errorMessage) setErrorMessage('');
   };
 
   return (
@@ -57,9 +88,10 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                     <Form.Control
                       type="text"
                       value={username}
-                      onChange={e => setUsername(e.target.value)}
+                      onChange={handleUsernameChange}
                       placeholder="Enter your username"
                       required
+                      disabled={isLoading}
                       className="border-0 shadow-sm"
                       style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
                     />
@@ -70,9 +102,10 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                     <Form.Control
                       type="password"
                       value={password}
-                      onChange={e => setPassword(e.target.value)}
+                      onChange={handlePasswordChange}
                       placeholder="Enter your password"
                       required
+                      disabled={isLoading}
                       className="border-0 shadow-sm"
                       style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
                     />
@@ -86,9 +119,10 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                     <Form.Control
                       type="text"
                       value={totpCode}
-                      onChange={e => setTotpCode(e.target.value)}
+                      onChange={handleTotpChange}
                       placeholder="000000"
                       required
+                      disabled={isLoading}
                       className="border-0 shadow-sm text-center"
                       style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc', fontSize: '1.5rem', letterSpacing: '0.3rem' }}
                       maxLength={6}
@@ -105,6 +139,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
               {/* Submit button */}
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-100 fw-bold border-0 shadow-sm mb-3"
                 size="lg"
                 style={{ 
@@ -113,15 +148,26 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                   padding: '12px'
                 }}
               >
-                <i className={`bi ${totpRequired ? 'bi-shield-check' : 'bi-box-arrow-in-right'} me-2`}></i>
-                {totpRequired ? 'Verify' : 'Sign In'}
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    {totpRequired ? 'Verifying...' : 'Signing In...'}
+                  </>
+                ) : (
+                  <>
+                    <i className={`bi ${totpRequired ? 'bi-shield-check' : 'bi-box-arrow-in-right'} me-2`}></i>
+                    {totpRequired ? 'Verify' : 'Sign In'}
+                  </>
+                )}
               </Button>
+              
               {/* Skip TOTP button for admins */}
               {totpRequired && (
                 <Button
                   variant="outline-warning"
                   onClick={() => onSkipTotp && onSkipTotp()}
-                  className="w-100 fw-bold border-2"
+                  disabled={isLoading}
+                  className="w-100 fw-bold border-2 mb-3"
                   size="lg"
                   style={{ 
                     borderRadius: '10px',
@@ -131,6 +177,22 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                   Skip 2FA
                 </Button>
               )}
+              
+              {/* Cancel button to go back to main page */}
+              <Button
+                variant="outline-secondary"
+                onClick={() => navigate('/')}
+                disabled={isLoading}
+                className="w-100 fw-bold border-2"
+                size="lg"
+                style={{ 
+                  borderRadius: '10px',
+                  padding: '12px'
+                }}
+              >
+                <i className="bi bi-arrow-left me-2"></i>
+                Back to Forum
+              </Button>
             </Form>
           </div>
         </div>

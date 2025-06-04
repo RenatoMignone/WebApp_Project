@@ -14,7 +14,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import { ForumLayout as Layout } from './components/Layout'; // Use named import
 import LoginForm from './components/LoginForm';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Button } from 'react-bootstrap';
 
 // --- Main App ---
 function App() {
@@ -53,16 +53,16 @@ function App() {
     // eslint-disable-next-line
   }, []);
 
-  // Load comments when a post is selected and user is authenticated
+  // Load comments when a post is selected (for both authenticated and unauthenticated users)
   useEffect(() => {
-    if (selectedPost && user) {
+    if (selectedPost) {
       API.getComments(selectedPost.id)
         .then(setComments)
         .catch(() => setMessage('Error loading comments'));
     } else {
       setComments([]);
     }
-  }, [selectedPost, user]);
+  }, [selectedPost]);
 
   // Check session on mount
   useEffect(() => {
@@ -88,7 +88,13 @@ function App() {
       }
       setMessage('');
     } catch (err) {
-      setMessage('Login failed');
+      // Clear any existing state
+      setUser(null);
+      setTotpRequired(false);
+      setPendingAdminUser(null);
+      setMessage('');
+      // Throw error to be handled by LoginForm
+      throw new Error(err.error || 'Login failed. Please check your credentials.');
     }
   }
 
@@ -102,7 +108,8 @@ function App() {
       setMessage('');
       navigate('/');
     } catch (err) {
-      setMessage('Invalid TOTP code');
+      // Throw error to be handled by LoginForm
+      throw new Error(err.error || 'Invalid TOTP code. Please try again.');
     }
   }
 
@@ -140,15 +147,12 @@ function App() {
   async function handleSelectPost(post) {
     setSelectedPost(post);
     setComments([]);
-    if (user) {
-      try {
-        const comms = await API.getComments(post.id);
-        setComments(comms);
-      } catch {
-        setMessage('Error loading comments');
-      }
+    try {
+      const comms = await API.getComments(post.id);
+      setComments(comms);
+    } catch {
+      setMessage('Error loading comments');
     }
-
   }
 
   async function handleAddPost(post) {
@@ -199,10 +203,9 @@ function App() {
     }
     try {
       await API.addComment(postId, text);
-      if (user) {
-        const comms = await API.getComments(postId);
-        setComments(comms);
-      }
+      // Refresh comments for all users (both authenticated and unauthenticated)
+      const comms = await API.getComments(postId);
+      setComments(comms);
       setMessage('Comment added successfully!');
       setMessageType('success');
       setTimeout(() => setMessage(''), 2000);
@@ -230,7 +233,7 @@ function App() {
     }
     try {
       await API.editComment(commentId, text);
-      if (user && selectedPost) {
+      if (selectedPost) {
         const comms = await API.getComments(selectedPost.id);
         setComments(comms);
       }
@@ -247,7 +250,7 @@ function App() {
   async function handleDeleteComment(commentId) {
     try {
       await API.deleteComment(commentId);
-      if (user && selectedPost) {
+      if (selectedPost) {
         const comms = await API.getComments(selectedPost.id);
         setComments(comms);
         setPosts(posts =>
@@ -296,50 +299,8 @@ function App() {
   return (
     <div className="px-3 py-4" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%)' }}>
       <Routes>
-        <Route
-          path="/login"
-          element={
-            user ? (
-              <Navigate to="/" />
-            ) : (
-              <Row className="justify-content-center">
-                <Col xs={12} sm={10} md={8} lg={5}>
-                  <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
-                    <div className="card-body">
-                      <LoginForm 
-                        onLogin={handleLogin} 
-                        totpRequired={totpRequired} 
-                        onTotp={handleTotp}
-                        onSkipTotp={handleSkipTotp}
-                      />
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            )
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <Row className="justify-content-center mt-5">
-              <Col xs={12} md={8} className="text-center">
-                <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
-                  <div className="card-body p-5">
-                    <h2 className="text-danger mb-4">
-                      <i className="bi bi-exclamation-triangle-fill"></i> 404 - Page Not Found
-                    </h2>
-                    <a href="/" className="btn btn-primary btn-lg" style={{ borderRadius: '25px' }}>
-                      <i className="bi bi-house-fill"></i> Go to Posts
-                    </a>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-          }
-        />
-        <Route
-          path="/"
+        <Route 
+          path="/" 
           element={
             <Layout
               user={user}
@@ -358,6 +319,87 @@ function App() {
               onSetInteresting={handleSetInteresting}
               onUnsetInteresting={handleUnsetInteresting}
             />
+          }
+        >
+          <Route 
+            index 
+            element={
+              <div>
+                {/* Main forum view - shows post list and details */}
+              </div>
+            } 
+          />
+          <Route 
+            path="post/:postId" 
+            element={
+              <div>
+                {/* Individual post view */}
+              </div>
+            } 
+          />
+        </Route>
+        <Route
+          path="/login"
+          element={
+            !user ? (
+              <Row className="justify-content-center">
+                <Col xs={12} sm={10} md={8} lg={5}>
+                  <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+                    <div className="card-body">
+                      <LoginForm 
+                        onLogin={handleLogin} 
+                        totpRequired={totpRequired} 
+                        onTotp={handleTotp}
+                        onSkipTotp={handleSkipTotp}
+                      />
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            ) : (
+              <Navigate replace to='/' />
+            )
+          }
+        />
+        {/* 404 Not Found Route - Must be last and replaces entire page */}
+        <Route
+          path="*"
+          element={
+            <Row className="justify-content-center mt-5">
+              <Col xs={12} md={8} className="text-center">
+                <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+                  <div className="card-body p-5">
+                    <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px', background: 'linear-gradient(45deg, #dc2626, #ef4444)' }}>
+                      <i className="bi bi-exclamation-triangle-fill text-white" style={{ fontSize: '3rem' }}></i>
+                    </div>
+                    <h2 className="text-danger mb-4 fw-bold">404 - Page Not Found</h2>
+                    <p className="lead text-muted mb-4">
+                      Sorry, the page you are looking for doesn't exist or has been moved.
+                    </p>
+                    <div className="d-flex gap-3 justify-content-center flex-wrap">
+                      <Button 
+                        variant="primary" 
+                        size="lg" 
+                        onClick={() => navigate('/')}
+                        style={{ borderRadius: '25px' }}
+                      >
+                        <i className="bi bi-house-fill me-2"></i>
+                        Go to Forum
+                      </Button>
+                      <Button 
+                        variant="outline-primary" 
+                        size="lg" 
+                        onClick={() => navigate('/login')}
+                        style={{ borderRadius: '25px' }}
+                      >
+                        <i className="bi bi-box-arrow-in-right me-2"></i>
+                        Login
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
           }
         />
       </Routes>

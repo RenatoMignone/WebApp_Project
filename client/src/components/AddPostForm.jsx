@@ -70,10 +70,10 @@ function AddPostForm({ onAdd }) {
           <Form.Label className="fw-bold text-dark">Max Comments (optional)</Form.Label>
           <Form.Control
             type="number"
-            min="1"
+            min="0"
             value={maxComments}
             onChange={e => setMaxComments(e.target.value)}
-            placeholder="Leave blank for unlimited"
+            placeholder="Leave blank for unlimited, 0 to disable"
             className="border-0 shadow-sm"
             style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
           />

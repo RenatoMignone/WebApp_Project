@@ -2,9 +2,8 @@
 
 const db = require('./db');
 
-/**
- * Add an interesting flag to a comment
- */
+//--------------------------------------------------------------------------
+// Add an interesting flag to a comment
 exports.addFlag = (userId, commentId) => {
   return new Promise((resolve, reject) => {
     const sql = 'INSERT INTO flags (user_id, comment_id) VALUES (?, ?)';
@@ -19,9 +18,8 @@ exports.addFlag = (userId, commentId) => {
   });
 };
 
-/**
- * Remove an interesting flag from a comment
- */
+//--------------------------------------------------------------------------
+// Remove an interesting flag from a comment
 exports.removeFlag = (userId, commentId) => {
   return new Promise((resolve, reject) => {
     const sql = 'DELETE FROM flags WHERE user_id = ? AND comment_id = ?';
@@ -36,9 +34,8 @@ exports.removeFlag = (userId, commentId) => {
   });
 };
 
-/**
- * Check if a user has flagged a comment as interesting
- */
+//--------------------------------------------------------------------------
+// Check if a user has flagged a comment
 exports.hasFlag = (userId, commentId) => {
   return new Promise((resolve, reject) => {
     const sql = 'SELECT * FROM flags WHERE user_id = ? AND comment_id = ?';
@@ -53,9 +50,8 @@ exports.hasFlag = (userId, commentId) => {
   });
 };
 
-/**
- * Get all flags for a comment
- */
+//--------------------------------------------------------------------------
+// Get all flags for a specific comment
 exports.getFlagsForComment = (commentId) => {
   return new Promise((resolve, reject) => {
     const sql = 'SELECT * FROM flags WHERE comment_id = ?';
@@ -69,3 +65,4 @@ exports.getFlagsForComment = (commentId) => {
     });
   });
 };
+//--------------------------------------------------------------------------

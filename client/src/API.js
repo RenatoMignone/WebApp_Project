@@ -83,10 +83,10 @@ const deletePost = async (id) => {
 
 // --- COMMENTS ---
 
-// Fetch all comments for a specific post (no authentication required)
+// Fetch all comments for a specific post (public endpoint)
 const getComments = async (postId) => {
   return getJson(
-    fetch(SERVER_URL + `posts/${postId}/comments`) // Removed credentials: 'include'
+    fetch(SERVER_URL + `posts/${postId}/comments`, { credentials: 'include' })
   ).then(json => json.map(comment => ({
     ...comment,
     timestamp: comment.timestamp ? dayjs(comment.timestamp) : null,

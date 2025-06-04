@@ -2,7 +2,8 @@ const db = require('./db');
 const crypto = require('crypto');
 
 
-
+//----------------------------------------------------------------------------
+// Get user based on the ID
 exports.getUserById = (id) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -27,6 +28,8 @@ exports.getUserById = (id) => {
   });
 };
 
+//----------------------------------------------------------------------------
+// Get user by username and password
 exports.getUser = (username, password) => {
   return new Promise((resolve, reject) => {
     const sql = `

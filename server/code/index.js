@@ -17,7 +17,7 @@ const daoComments = require('./dao-comments');
 const daoFlags = require('./dao-flags');
 
 const SQLiteStore = require('connect-sqlite3')(session);
-const { check, validationResult } = require('express-validator');
+const { check, validationResult, body } = require('express-validator');
 
 //----------------------------------------------------------------------------
 // Create the Express app and configure middleware
@@ -85,12 +85,6 @@ passport.deserializeUser((id, done) => {
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
   return res.status(401).json({ error: 'Not authenticated' });
-}
-
-// middleware to check if user is admin and has completed 2FA to unlock admin features
-function isAdmin2FA(req, res, next) {
-  if (req.user && req.user.is_admin && req.session.secondFactor === 'totp') return next();
-  return res.status(403).json({ error: 'Admin 2FA required' });
 }
 
 //----------------------------------------------------------------------------
@@ -209,7 +203,13 @@ app.get('/api/posts/:id/comments', async (req, res) => {
     const postId = parseInt(req.params.id);
     const userId = req.user?.id || null; // Get user ID if authenticated, null otherwise
     const comments = await daoComments.getCommentsByPost(postId, userId);
-    res.json(comments);
+    
+    // If user is not authenticated, filter to show only anonymous comments (author_id is null)
+    const filteredComments = !req.user 
+      ? comments.filter(comment => comment.author_id === null || comment.author_id === undefined)
+      : comments;
+    
+    res.json(filteredComments);
   } catch (err) {
     console.error('Error getting comments:', err);
     res.status(500).json({ error: 'Failed to get comments' });
@@ -217,33 +217,33 @@ app.get('/api/posts/:id/comments', async (req, res) => {
 });
 
 //----------------------------------------------------------------------------
-// Add a post (authenticated only)
-app.post('/api/posts', 
-  isLoggedIn,
-  [
-    check('title').isLength({ min: 1, max: 160 }),
-    check('text').isLength({ min: 1 }),
-    check('max_comments').optional().isInt({ min: 1 })
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty())
-      return res.status(422).json({ errors: errors.array() });
+// POST /api/posts - Add a new post
+app.post('/api/posts', isLoggedIn, [
+  body('title').isLength({min: 1}).withMessage('Title is required'),
+  body('text').isLength({min: 1}).withMessage('Text is required'),
+  // Fix: Allow max_comments to be 0
+  body('max_comments').optional().isInt({min: 0}).withMessage('Max comments must be a non-negative integer')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({error: errors.array()});
+  }
 
-    try {
-      const { title, text, max_comments } = req.body;
-      if (!title || !text) return res.status(400).json({ error: 'Missing fields' });
-      const post = {
-        title,
-        author_id: req.user.id,
-        text,
-        max_comments: max_comments || null
-      };
-      const id = await daoPosts.addPost(post);
-      res.status(201).json({ id });
-    } catch (err) {
-      res.status(500).json({ error: 'Database error' });
-    }
+  try {
+    const post = {
+      title: req.body.title,
+      text: req.body.text,
+      author_id: req.user.id,
+      // Fix: Explicitly handle 0 value
+      max_comments: req.body.max_comments === 0 ? 0 : (req.body.max_comments || null)
+    };
+    
+    const postId = await daoPosts.addPost(post);
+    res.status(201).json({id: postId});
+  } catch (err) {
+    console.error('Error adding post:', err);
+    res.status(500).json({error: 'Database error'});
+  }
 });
 
 //----------------------------------------------------------------------------
@@ -314,24 +314,29 @@ app.delete('/api/comments/:id', isLoggedIn, async (req, res) => {
 });
 
 //----------------------------------------------------------------------------
-// Mark/unmark comment as interesting (authenticated only)
+// POST /api/comments/:id/interesting - Mark a comment as interesting (authentication required)
 app.post('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
-    await daoFlags.addFlag(req.user.id, req.params.id);
-    res.status(200).json({ success: true });
+    const commentId = parseInt(req.params.id);
+    const userId = req.user.id;
+    await daoComments.setInteresting(commentId, userId);
+    res.status(204).end();
   } catch (err) {
-    res.status(500).json({ error: 'Database error' });
+    console.error('Error setting interesting:', err);
+    res.status(500).json({ error: 'Failed to mark comment as interesting' });
   }
 });
 
-//----------------------------------------------------------------------------
-// Remove interesting mark from comment (authenticated only)
+// DELETE /api/comments/:id/interesting - Remove interesting mark from comment (authentication required)
 app.delete('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
-    await daoFlags.removeFlag(req.user.id, req.params.id);
-    res.status(200).json({ success: true });
+    const commentId = parseInt(req.params.id);
+    const userId = req.user.id;
+    await daoComments.unsetInteresting(commentId, userId);
+    res.status(204).end();
   } catch (err) {
-    res.status(500).json({ error: 'Database error' });
+    console.error('Error unsetting interesting:', err);
+    res.status(500).json({ error: 'Failed to remove interesting mark' });
   }
 });
 

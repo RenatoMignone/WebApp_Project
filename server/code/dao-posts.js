@@ -55,25 +55,34 @@ exports.getPostById = (id) => {
   });
 };
 
+// Add a new post
 exports.addPost = (post) => {
   return new Promise((resolve, reject) => {
-    const sql = `
-      INSERT INTO posts (title, author_id, text, max_comments, timestamp)
-      VALUES (?, ?, ?, ?, datetime('now'))
-    `;
-    db.run(sql, [post.title, post.author_id, post.text, post.max_comments], function (err) {
-      if (err) reject(err);
-      else resolve(this.lastID);
+    // Fix: Properly handle max_comments when it's 0
+    const maxComments = post.max_comments === 0 ? 0 : (post.max_comments || null);
+    
+    const sql = 'INSERT INTO posts (title, text, author_id, max_comments) VALUES (?, ?, ?, ?)';
+    db.run(sql, [post.title, post.text, post.author_id, maxComments], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(this.lastID);
+      }
     });
   });
 };
 
+// Delete a post by ID (with cascading deletes for comments and flags)
 exports.deletePost = (id) => {
   return new Promise((resolve, reject) => {
-    const sql = 'DELETE FROM posts WHERE id=?';
-    db.run(sql, [id], function (err) {
-      if (err) reject(err);
-      else resolve(this.changes);
+    db.serialize(() => {
+      db.run("DELETE FROM comments WHERE post_id = ?", [id], function(err) {
+        if (err) return reject(err);
+        db.run("DELETE FROM posts WHERE id = ?", [id], function(err2) {
+          if (err2) reject(err2);
+          else resolve(this.changes);
+        });
+      });
     });
   });
 };

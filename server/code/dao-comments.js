@@ -1,6 +1,8 @@
 const db = require('./db');
 const dayjs = require('dayjs');
 
+//--------------------------------------------------------------------------
+// List all comments for a specific post, with optional user authentication
 exports.listCommentsByPost = (post_id, user_id = null) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -38,6 +40,8 @@ exports.listCommentsByPost = (post_id, user_id = null) => {
   });
 };
 
+//--------------------------------------------------------------------------
+// Add a new comment to a post
 exports.addComment = (comment) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -51,6 +55,8 @@ exports.addComment = (comment) => {
   });
 };
 
+//--------------------------------------------------------------------------
+// Edit an existing comment by ID
 exports.editComment = (id, text, user_id, is_admin) => {
   return new Promise((resolve, reject) => {
     // Only allow if user is author or admin
@@ -65,6 +71,8 @@ exports.editComment = (id, text, user_id, is_admin) => {
   });
 };
 
+//--------------------------------------------------------------------------
+// Delete a comment by ID (only if user is author or admin)
 exports.deleteComment = (id, user_id, is_admin) => {
   return new Promise((resolve, reject) => {
     // Only allow if user is author or admin
@@ -79,6 +87,7 @@ exports.deleteComment = (id, user_id, is_admin) => {
   });
 };
 
+//--------------------------------------------------------------------------
 // Get all comments for a specific post (with optional user authentication)
 exports.getCommentsByPost = (postId, userId = null) => {
   return new Promise((resolve, reject) => {
@@ -121,6 +130,36 @@ exports.getCommentsByPost = (postId, userId = null) => {
         reject(err);
       } else {
         resolve(rows);
+      }
+    });
+  });
+};
+
+//--------------------------------------------------------------------------
+// Mark a comment as interesting for a specific user
+exports.setInteresting = (commentId, userId) => {
+  return new Promise((resolve, reject) => {
+    const sql = `INSERT OR IGNORE INTO comment_interesting_flags (comment_id, user_id) VALUES (?, ?)`;
+    db.run(sql, [commentId, userId], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+//--------------------------------------------------------------------------
+// Remove interesting mark from a comment for a specific user
+exports.unsetInteresting = (commentId, userId) => {
+  return new Promise((resolve, reject) => {
+    const sql = `DELETE FROM comment_interesting_flags WHERE comment_id = ? AND user_id = ?`;
+    db.run(sql, [commentId, userId], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
       }
     });
   });

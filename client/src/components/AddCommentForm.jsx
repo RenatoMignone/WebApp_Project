@@ -5,6 +5,7 @@
 // - Authenticated users can add comments with their identity.
 // - Anonymous users can add comments without authentication.
 // - The form dynamically adjusts its placeholder and button text based on the user's authentication status.
+// - Commenting can be disabled by the post author (max_comments = 0).
 // -----------------------------------------------------------------------------
 
 import React, { useState } from 'react';
@@ -17,13 +18,37 @@ function AddCommentForm({ user, post, onAddComment }) {
   // If no post is selected, do not render the form
   if (!post) return null;
 
+  // Check if commenting is disabled (max_comments = 0)
+  const isCommentingDisabled = post.max_comments === 0;
+
   // Handle form submission
   const handleSubmit = e => {
     e.preventDefault();           // Prevent default form submission behavior
+    if (isCommentingDisabled) return; // Prevent submission if commenting is disabled
     onAddComment(post.id, text);  // Trigger the callback to add the comment
     setText('');                  // Clear the input field after submission
   };
 
+  // If commenting is disabled, show a message instead of the form
+  if (isCommentingDisabled) {
+    return (
+      <div className="mt-4">
+        <div className="card border-0 shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+          <div className="card-body p-4 text-center">
+            <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '60px', height: '60px', background: 'linear-gradient(45deg, #dc2626, #ef4444)' }}>
+              <i className="bi bi-chat-slash-fill text-white" style={{ fontSize: '1.5rem' }}></i>
+            </div>
+            <h6 className="mb-2 fw-bold text-muted">
+              Comments Disabled
+            </h6>
+            <p className="small text-muted mb-0">
+              The author has disabled comments for this post.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4">

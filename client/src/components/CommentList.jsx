@@ -40,7 +40,14 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
 
   // Display a message if there are no comments
   if (!comments || comments.length === 0) {
-    return <div className="text-muted">No comments yet.</div>;
+    return (
+      <div className="text-muted text-center py-4"> 
+        {user 
+          ? "No comments yet." 
+          : "No anonymous comments yet. Sign in to see all comments and participate in the discussion."
+        }
+      </div>
+    );
   }
 
   return (
@@ -108,27 +115,32 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
                         <i className="bi bi-clock me-1"></i>
                         <span>{c.timestamp && dayjs(c.timestamp).format('MMM DD, YYYY HH:mm')}</span>
                       </div>
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-star-fill me-1 text-warning"></i>
-                        <span className="fw-medium">{c.interesting_count}</span>
-                      </div>
                     </div>
                   </>
                 )}
               </div>
               <div className="ms-3">
                 {/* Buttons for marking as interesting, editing, or deleting */}
-                <div className="d-flex gap-1">
+                <div className="d-flex gap-1 align-items-center">
                   {user && (
-                    <Button
-                      variant={c.interesting ? "warning" : "outline-warning"}
-                      size="sm"
-                      title={c.interesting ? "Remove from interesting" : "Mark as interesting"}
-                      onClick={() => c.interesting ? onUnsetInteresting(c.id) : onSetInteresting(c.id)}
-                      style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
-                    >
-                      <i className={`bi ${c.interesting ? 'bi-star-fill' : 'bi-star'}`}></i>
-                    </Button>
+                    <div className="d-flex align-items-center">
+                      <Button
+                        variant={c.interesting ? "warning" : "outline-warning"}
+                        size="sm"
+                        title={c.interesting ? "Remove from interesting" : "Mark as interesting"}
+                        onClick={() => c.interesting ? onUnsetInteresting(c.id) : onSetInteresting(c.id)}
+                        style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
+                      >
+                        <i className={`bi ${c.interesting ? 'bi-star-fill' : 'bi-star'}`}></i>
+                      </Button>
+                      <span className="ms-1 small fw-medium text-muted">{c.interesting_count || 0}</span>
+                    </div>
+                  )}
+                  {!user && (
+                    <div className="d-flex align-items-center me-2">
+                      <i className="bi bi-star-fill text-warning me-1"></i>
+                      <span className="small fw-medium text-muted">{c.interesting_count || 0}</span>
+                    </div>
                   )}
                   {user && (user.id === c.author_id || (user.is_admin && user.isTotp)) && (
                     <>
