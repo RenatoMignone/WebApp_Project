@@ -6,10 +6,16 @@
 // The form validates required fields and resets after submission.
 // -----------------------------------------------------------------------------
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import API from '../API';
 
-function AddPostForm({ onAdd }) {
+function AddPostForm({ onPostsChange, showMessage }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
+  
   // State to manage the title input
   const [title, setTitle] = useState('');
   // State to manage the content input
@@ -17,18 +23,44 @@ function AddPostForm({ onAdd }) {
   // State to manage the optional maximum comments input
   const [maxComments, setMaxComments] = useState('');
 
+  // ############################################################################
+  // HANDLERS
+  // ############################################################################
+
   // Handle form submission
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     // Prevent default form submission behavior
     e.preventDefault();
-    // Trigger the callback to add the post with the provided data
-    onAdd({ title, text, max_comments: maxComments ? Number(maxComments) : null });
-    // Reset the form fields after submission
-    setTitle('');
-    setText('');
-    setMaxComments('');
+    
+    if (!title.trim() || !text.trim()) {
+      showMessage('Title and text are required');
+      return;
+    }
+    
+    try {
+      await API.addPost({ 
+        title, 
+        text, 
+        max_comments: maxComments ? Number(maxComments) : null 
+      });
+      
+      // Refresh posts list
+      const posts = await API.getPosts();
+      onPostsChange(posts);
+      
+      // Reset the form fields after submission
+      setTitle('');
+      setText('');
+      setMaxComments('');
+      
+      showMessage('Post added successfully!', 'success');
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error adding post');
+    }
   };
 
+  //-----------------------------------------------------------------------------
+  // Render the form for adding a new post
   return (
     // Form container with styling and submission handler
     <Form onSubmit={handleSubmit} className="card border-0 shadow-lg mb-4" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
@@ -38,6 +70,7 @@ function AddPostForm({ onAdd }) {
           <i className="bi bi-plus-circle-fill me-2"></i>
           Create New Post
         </h5>
+        
         {/* Input field for the post title */}
         <Form.Group className="mb-3">
           <Form.Label className="fw-bold text-dark">Title</Form.Label>
@@ -51,6 +84,7 @@ function AddPostForm({ onAdd }) {
             style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
           />
         </Form.Group>
+
         {/* Textarea for the post content */}
         <Form.Group className="mb-3">
           <Form.Label className="fw-bold text-dark">Content</Form.Label>
@@ -65,6 +99,7 @@ function AddPostForm({ onAdd }) {
             style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
           />
         </Form.Group>
+
         {/* Input field for the optional maximum comments */}
         <Form.Group className="mb-4">
           <Form.Label className="fw-bold text-dark">Max Comments (optional)</Form.Label>
@@ -78,6 +113,7 @@ function AddPostForm({ onAdd }) {
             style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
           />
         </Form.Group>
+        
         {/* Submit button */}
         <Button 
           type="submit" 
@@ -91,9 +127,11 @@ function AddPostForm({ onAdd }) {
           <i className="bi bi-send-fill me-2"></i>
           Publish Post
         </Button>
+        
       </div>
     </Form>
   );
 }
 
+//-----------------------------------------------------------------------------
 export default AddPostForm;

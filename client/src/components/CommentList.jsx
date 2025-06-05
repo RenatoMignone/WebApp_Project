@@ -5,39 +5,105 @@
 // for editing, deleting, and marking comments as interesting.
 // -----------------------------------------------------------------------------
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import dayjs from 'dayjs';
-import { ListGroup, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import API from '../API';
 
-function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInteresting, onUnsetInteresting }) {
+function CommentList({ comments, user, selectedPost, onCommentsChange, showMessage }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
+  
   // State to track the currently editing comment
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
 
+  //-----------------------------------------------------------------------------
   // Start editing a comment
   const startEdit = (c) => {
     setEditingId(c.id);
     setEditText(c.text);
   };
 
+  //-----------------------------------------------------------------------------
   // Cancel editing a comment
   const cancelEdit = () => {
     setEditingId(null);
     setEditText('');
   };
 
+  //-----------------------------------------------------------------------------
   // Save the edited comment
-  const saveEdit = (id) => {
-    if (editText.trim()) {
-      onEditComment(id, editText);
+  const saveEdit = async (id) => {
+    if (!editText.trim()) {
+      showMessage('Comment text is required');
+      return;
+    }
+    
+    try {
+      await API.editComment(id, editText);
+      const updatedComments = await API.getComments(selectedPost.id);
+      onCommentsChange(updatedComments);
       setEditingId(null);
       setEditText('');
+      showMessage('Comment edited successfully!', 'success');
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error editing comment');
     }
   };
 
+
+  // ##############################################################################
+  // HANDLERS
+  // ##############################################################################
+
+  // Handle deleting a comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await API.deleteComment(commentId);
+      const updatedComments = await API.getComments(selectedPost.id);
+      onCommentsChange(updatedComments);
+      showMessage('Comment deleted successfully!', 'success');
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error deleting comment');
+    }
+  };
+
+  //-----------------------------------------------------------------------------
+  // Handle setting a comment as interesting
+  const handleSetInteresting = async (commentId) => {
+    try {
+      await API.setInteresting(commentId);
+      if (user && selectedPost) {
+        const updatedComments = await API.getComments(selectedPost.id);
+        onCommentsChange(updatedComments);
+      }
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error setting interesting');
+    }
+  };
+
+  //-----------------------------------------------------------------------------
+  // Handle unsetting a comment as interesting
+  const handleUnsetInteresting = async (commentId) => {
+    try {
+      await API.unsetInteresting(commentId);
+      if (user && selectedPost) {
+        const updatedComments = await API.getComments(selectedPost.id);
+        onCommentsChange(updatedComments);
+      }
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error unsetting interesting');
+    }
+  };
+
+  //-----------------------------------------------------------------------------
   // Sort comments by timestamp in descending order
   const sortedComments = [...comments].sort((a, b) => b.timestamp - a.timestamp);
 
+  //-----------------------------------------------------------------------------
   // Display a message if there are no comments
   if (!comments || comments.length === 0) {
     return (
@@ -50,6 +116,8 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
     );
   }
 
+  //-----------------------------------------------------------------------------
+  // Render the comments list
   return (
     <div className="mt-4">
       {/* Header for the comments section */}
@@ -59,6 +127,8 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
           Comments ({comments.length})
         </h5>
       </div>
+
+      {/* Comments list container */}
       <div className="border-0 shadow-sm" style={{ background: '#ffffff', borderRadius: '0 0 15px 15px' }}>
         {sortedComments.map((c, index) => (
           <div 
@@ -89,8 +159,9 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
                       autoFocus
                       style={{ borderRadius: '10px', background: '#f8fafc' }}
                     />
+
+                    {/* Display the character count */}
                     <div>
-                      {/* Buttons to save or cancel editing */}
                       <Button type="submit" variant="success" size="sm" className="me-2" style={{ borderRadius: '20px' }}>
                         <i className="bi bi-check-lg me-1"></i>
                         Save
@@ -128,7 +199,7 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
                         variant={c.interesting ? "warning" : "outline-warning"}
                         size="sm"
                         title={c.interesting ? "Remove from interesting" : "Mark as interesting"}
-                        onClick={() => c.interesting ? onUnsetInteresting(c.id) : onSetInteresting(c.id)}
+                        onClick={() => c.interesting ? handleUnsetInteresting(c.id) : handleSetInteresting(c.id)}
                         style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
                       >
                         <i className={`bi ${c.interesting ? 'bi-star-fill' : 'bi-star'}`}></i>
@@ -159,7 +230,7 @@ function CommentList({ comments, user, onEditComment, onDeleteComment, onSetInte
                         variant="outline-danger"
                         size="sm"
                         title="Delete comment"
-                        onClick={() => onDeleteComment(c.id)}
+                        onClick={() => handleDeleteComment(c.id)}
                         style={{ borderRadius: '50%', width: '32px', height: '32px', padding: '0' }}
                       >
                         <i className="bi bi-trash"></i>

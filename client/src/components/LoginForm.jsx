@@ -5,18 +5,34 @@
 // standard login with username and password and TOTP-based 2FA verification.
 // -----------------------------------------------------------------------------
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
+
+  // state for the username
   const [username, setUsername] = useState('');
+  // state for the password
   const [password, setPassword] = useState('');
+  // state for the TOTP code
   const [totpCode, setTotpCode] = useState('');
+  // state for error messages
   const [errorMessage, setErrorMessage] = useState('');
+  // state for loading state during submission
   const [isLoading, setIsLoading] = useState(false);
+  
   const navigate = useNavigate();
 
+  // ###########################################################################
+  // HANDLERS
+  // ###########################################################################
+
+  // Handle form submission for login or TOTP verification
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage(''); // Clear any previous errors
@@ -40,22 +56,29 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
     }
   };
 
+  //-----------------------------------------------------------------------------
   // Clear error message when user starts typing
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
     if (errorMessage) setErrorMessage('');
   };
 
+  //-----------------------------------------------------------------------------
+  // Handle password change
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
     if (errorMessage) setErrorMessage('');
   };
 
+  //-----------------------------------------------------------------------------
+  // Handle TOTP code change
   const handleTotpChange = (e) => {
     setTotpCode(e.target.value);
     if (errorMessage) setErrorMessage('');
   };
 
+  //-----------------------------------------------------------------------------
+  // Render the login form
   return (
     <Row className="justify-content-center px-3 py-4">
       <Col xs={12} sm={10} md={8} lg={6}>
@@ -201,4 +224,5 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
   );
 }
 
+//-----------------------------------------------------------------------------
 export default LoginForm;

@@ -5,14 +5,33 @@
 // view its details and comments. Posts are sorted by timestamp in descending order.
 // -----------------------------------------------------------------------------
 
-import React from 'react';
+import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { ListGroup, Badge } from 'react-bootstrap';
+import API from '../API';
 
-function PostList({ posts, onSelect, selectedPost, user }) {
+function PostList({ posts, setPosts, onSelectPost, selectedPost, user, showMessage }) {
+
+  //-----------------------------------------------------------------------------
+  // Load posts on mount
+  useEffect(() => {
+    const refreshPosts = async () => {
+      try {
+        const postsData = await API.getPosts();
+        setPosts(postsData);
+      } catch {
+        showMessage('Error loading posts');
+      }
+    };
+    
+    refreshPosts();
+  }, [setPosts, showMessage]);
+
   // Sort posts by timestamp in descending order
   const sortedPosts = [...posts].sort((a, b) => b.timestamp - a.timestamp);
 
+  //-----------------------------------------------------------------------------
+  // Render the list of posts
   return (
     <div>
       {/* Header for the posts section */}
@@ -37,7 +56,7 @@ function PostList({ posts, onSelect, selectedPost, user }) {
               transition: 'all 0.3s ease',
               borderLeft: selectedPost && selectedPost.id === post.id ? '4px solid #fbbf24' : '4px solid transparent'
             }}
-            onClick={() => onSelect(post)}
+            onClick={() => onSelectPost(post)}
             onMouseEnter={(e) => {
               if (selectedPost?.id !== post.id) {
                 e.target.style.background = 'rgba(59, 130, 246, 0.1)';
@@ -81,4 +100,5 @@ function PostList({ posts, onSelect, selectedPost, user }) {
   );
 }
 
+//-----------------------------------------------------------------------------
 export default PostList;

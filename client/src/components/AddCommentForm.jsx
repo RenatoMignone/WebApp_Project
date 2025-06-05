@@ -10,8 +10,14 @@
 
 import { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import API from '../API';
 
-function AddCommentForm({ user, post, onAddComment }) {
+function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
+
   // State to manage the text input for the comment
   const [text, setText] = useState('');
 
@@ -21,14 +27,32 @@ function AddCommentForm({ user, post, onAddComment }) {
   // Check if commenting is disabled (max_comments = 0)
   const isCommentingDisabled = post.max_comments === 0;
 
-  // Handle form submission
-  const handleSubmit = e => {
+  // ############################################################################
+  // HANDLERS
+  // ############################################################################
+
+  // Handle form submission for adding a comment
+  const handleSubmit = async e => {
     e.preventDefault();           // Prevent default form submission behavior
     if (isCommentingDisabled) return; // Prevent submission if commenting is disabled
-    onAddComment(post.id, text);  // Trigger the callback to add the comment
-    setText('');                  // Clear the input field after submission
+    
+    if (!text.trim()) {
+      showMessage('Comment text is required');
+      return;
+    }
+    
+    try {
+      await API.addComment(post.id, text);
+      const updatedComments = await API.getComments(post.id);
+      onCommentsChange(updatedComments);
+      setText('');                  // Clear the input field after submission
+      showMessage('Comment added successfully!', 'success');
+    } catch (e) {
+      showMessage(e?.response?.data?.error || 'Error adding comment');
+    }
   };
 
+  //-----------------------------------------------------------------------------
   // If commenting is disabled, show a message instead of the form
   if (isCommentingDisabled) {
     return (
@@ -47,6 +71,7 @@ function AddCommentForm({ user, post, onAddComment }) {
     );
   }
 
+  //-----------------------------------------------------------------------------
   return (
     // THis classname is used to style the form container
     <div className="mt-4">
@@ -96,4 +121,5 @@ function AddCommentForm({ user, post, onAddComment }) {
   );
 }
 
+//-----------------------------------------------------------------------------
 export default AddCommentForm;

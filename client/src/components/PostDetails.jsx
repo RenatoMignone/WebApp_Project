@@ -5,11 +5,16 @@
 // functionality for deleting the post if the user has the necessary permissions.
 // -----------------------------------------------------------------------------
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import dayjs from 'dayjs';
 import { Card, Modal, Button } from 'react-bootstrap';
+import API from '../API';
 
-function PostDetails({ post, user, onDeletePost }) {
+function PostDetails({ post, user, showMessage }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
   const [showModal, setShowModal] = useState(false);
 
   if (!post) return null;
@@ -20,6 +25,25 @@ function PostDetails({ post, user, onDeletePost }) {
     (user.id === post.author_id ||
       (user.is_admin && user.isTotp));
 
+  // ###########################################################################
+  // HANDLERS
+  // ###########################################################################
+
+  // Handle post deletion
+  const handleDeletePost = async () => {
+    try {
+      await API.deletePost(post.id);
+      showMessage('Post deleted successfully!', 'success');
+      // The parent component will handle post list refresh and navigation
+      window.location.href = '/'; // Simple way to refresh the entire page
+    } catch (e) {
+      showMessage(e?.error || 'Error deleting post');
+    }
+    setShowModal(false);
+  };
+
+  //-----------------------------------------------------------------------------
+  // Render the post details card
   return (
     <div className="mt-4 px-3">
       <Card className="mb-3 border-0 shadow-lg" style={{ background: '#ffffff', borderRadius: '15px' }}>
@@ -31,19 +55,14 @@ function PostDetails({ post, user, onDeletePost }) {
               by {post.author}
             </small>
           </div>
-          {onDeletePost && (
+          {canDelete && (
             <>
               {/* Button to trigger the delete confirmation modal */}
               <Button
-                variant={canDelete ? "danger" : "outline-secondary"}
+                variant="danger"
                 size="sm"
-                onClick={() => canDelete && setShowModal(true)}
-                disabled={!canDelete}
-                title={
-                  canDelete
-                    ? "Delete Post"
-                    : "You are not allowed to delete this post"
-                }
+                onClick={() => setShowModal(true)}
+                title="Delete Post"
                 style={{ borderRadius: '20px' }}
               >
                 <i className="bi bi-trash me-1"></i> Delete
@@ -63,7 +82,7 @@ function PostDetails({ post, user, onDeletePost }) {
                   <Button variant="outline-secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '20px' }}>
                     Cancel
                   </Button>
-                  <Button variant="danger" onClick={() => { setShowModal(false); onDeletePost(post.id); }} style={{ borderRadius: '20px' }}>
+                  <Button variant="danger" onClick={handleDeletePost} style={{ borderRadius: '20px' }}>
                     <i className="bi bi-trash me-1"></i>
                     Delete
                   </Button>

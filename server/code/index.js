@@ -16,8 +16,7 @@ const daoPosts = require('./dao-posts');
 const daoComments = require('./dao-comments');
 const daoFlags = require('./dao-flags');
 
-const SQLiteStore = require('connect-sqlite3')(session);
-const { check, validationResult, body } = require('express-validator');
+const { validationResult, body } = require('express-validator');
 
 //----------------------------------------------------------------------------
 // Create the Express app and configure middleware

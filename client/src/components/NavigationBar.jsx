@@ -5,7 +5,6 @@
 // It displays the app title, user information (if logged in), and login/logout buttons.
 // -----------------------------------------------------------------------------
 
-import React from 'react';
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 

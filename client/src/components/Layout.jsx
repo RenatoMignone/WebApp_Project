@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Button, Alert, Spinner, Toast } from 'react-bootstrap';
-import { Link, useParams, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Row, Col, Button, Alert} from 'react-bootstrap';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import API from '../API';
 
 import NavigationBar from './NavigationBar';
 import AddPostForm from './AddPostForm';
@@ -8,7 +9,10 @@ import PostList from './PostList';
 import PostDetails from './PostDetails';
 import CommentList from './CommentList';
 import AddCommentForm from './AddCommentForm';
+import LoginForm from './LoginForm';
 
+
+//------------------------------------------------------------------------
 // --- Not Found Layout ---
 function NotFoundLayout() {
   return (
@@ -42,15 +46,20 @@ function NotFoundLayout() {
   );
 }
 
+//------------------------------------------------------------------------
 // --- Login Layout ---
-function LoginLayout({ onLogin, totpRequired, onTotp }) {
+function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp }) {
   return (
     <Row className="justify-content-center">
       <Col xs={12} sm={10} md={8} lg={5}>
-        <div className="card shadow-lg border-0" style={{ background: '#f8f9fa' }}>
+        <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
           <div className="card-body">
-            <h1 className="text-center mb-4">Login</h1>
-            <LoginForm onLogin={onLogin} totpRequired={totpRequired} onTotp={onTotp} />
+            <LoginForm 
+              onLogin={onLogin} 
+              totpRequired={totpRequired} 
+              onTotp={onTotp}
+              onSkipTotp={onSkipTotp}
+            />
           </div>
         </div>
       </Col>
@@ -58,6 +67,7 @@ function LoginLayout({ onLogin, totpRequired, onTotp }) {
   );
 }
 
+//------------------------------------------------------------------------
 // --- Add Post Layout ---
 function AddPostLayout({ user, onAddPost }) {
   return (
@@ -69,34 +79,46 @@ function AddPostLayout({ user, onAddPost }) {
   );
 }
 
+//------------------------------------------------------------------------
 // --- Post Details Layout ---
-function PostDetailsLayout({
-  user,
-  selectedPost,
-  comments,
-  onDeletePost,
-  onAddComment,
-  onEditComment,
-  onDeleteComment,
-  onSetInteresting,
-  onUnsetInteresting,
-}) {
+function PostDetailsLayout({ user, selectedPost, showMessage }) {
+  const [comments, setComments] = useState([]);
+
+  // Load comments when a post is selected
+  useEffect(() => {
+    if (selectedPost) {
+      API.getComments(selectedPost.id)
+        .then(setComments)
+        .catch(() => showMessage('Error loading comments'));
+    } else {
+      setComments([]);
+    }
+  }, [selectedPost, showMessage]);
+
   return (
     <Row>
       <Col>
         {selectedPost ? (
           <>
-            <PostDetails post={selectedPost} user={user} onDeletePost={onDeletePost} />
+            <PostDetails 
+              post={selectedPost} 
+              user={user} 
+              showMessage={showMessage}
+            />
             <hr />
             <CommentList
               comments={comments}
               user={user}
-              onEditComment={onEditComment}
-              onDeleteComment={onDeleteComment}
-              onSetInteresting={onSetInteresting}
-              onUnsetInteresting={onUnsetInteresting}
+              selectedPost={selectedPost}
+              onCommentsChange={setComments}
+              showMessage={showMessage}
             />
-            <AddCommentForm user={user} post={selectedPost} onAddComment={onAddComment} />
+            <AddCommentForm 
+              user={user} 
+              post={selectedPost} 
+              onCommentsChange={setComments}
+              showMessage={showMessage}
+            />
           </>
         ) : (
           <div className="text-center py-5">
@@ -122,27 +144,19 @@ function PostDetailsLayout({
   );
 }
 
-
+//------------------------------------------------------------------------
 // --- Main Forum Layout ---
-function ForumLayout({
-  user,
-  posts,
-  selectedPost,
-  comments,
-  message,
-  messageType = 'danger',
-  onLogout,
-  onAddPost,
-  onSelectPost,
-  onDeletePost,
-  onAddComment,
-  onEditComment,
-  onDeleteComment,
-  onSetInteresting,
-  onUnsetInteresting,
-}) {
+function ForumLayout({ user, message, messageType = 'danger', onLogout, showMessage }) {
+
+  // ###########################################################################
+  // STATE MANAGEMENT
+  // ###########################################################################
+
+  const [posts, setPosts] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null);
   const location = useLocation();
 
+  //----------------------------------------------------------------------------
   return (
     <div className="px-3 py-4">
       <Row>
@@ -165,44 +179,37 @@ function ForumLayout({
       <Row className="g-4">
         <Col xs={12} md={5} lg={4}>
           <div className="sticky-top" style={{ top: '90px' }}>
-            {user && <AddPostForm onAdd={onAddPost} />}
+            {user && (
+              <AddPostForm 
+                onPostsChange={setPosts}
+                showMessage={showMessage}
+              />
+            )}
             <div className="card shadow-lg border-0 mt-3" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
               <div className="card-body p-0">
                 <PostList
                   posts={posts}
-                  onSelect={onSelectPost}
+                  setPosts={setPosts}
                   selectedPost={selectedPost}
+                  onSelectPost={setSelectedPost}
                   user={user}
+                  showMessage={showMessage}
                 />
               </div>
             </div>
           </div>
         </Col>
         <Col xs={12} md={7} lg={8}>
-          {/* Render nested routes content or default view */}
           <Outlet context={{ 
             user,
             selectedPost,
-            comments,
-            onDeletePost,
-            onAddComment,
-            onEditComment,
-            onDeleteComment,
-            onSetInteresting,
-            onUnsetInteresting
+            showMessage
           }} />
-          {/* Default view when at root path */}
           {location.pathname === "/" && (
             <PostDetailsLayout
               user={user}
               selectedPost={selectedPost}
-              comments={comments}
-              onDeletePost={onDeletePost}
-              onAddComment={onAddComment}
-              onEditComment={onEditComment}
-              onDeleteComment={onDeleteComment}
-              onSetInteresting={onSetInteresting}
-              onUnsetInteresting={onUnsetInteresting}
+              showMessage={showMessage}
             />
           )}
         </Col>
@@ -211,5 +218,6 @@ function ForumLayout({
   );
 }
 
+//-----------------------------------------------------------------------------
 export { NotFoundLayout, LoginLayout, AddPostLayout, ForumLayout };
 export default ForumLayout;

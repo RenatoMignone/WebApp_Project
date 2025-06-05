@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 
 const SERVER_URL = 'http://localhost:3001/api/';
 
+//----------------------------------------------------------------------------
 /**
  * Utility function for parsing the HTTP response.
  */
@@ -37,7 +38,9 @@ function getJson(httpResponsePromise) {
   });
 }
 
-// --- POSTS ---
+//############################################################################
+// POSTS
+//############################################################################
 
 // Fetch all posts from the server
 const getPosts = async () => {
@@ -49,6 +52,7 @@ const getPosts = async () => {
   })));
 };
 
+//----------------------------------------------------------------------------
 // Fetch a single post by ID
 const getPost = async (id) => {
   return getJson(
@@ -59,6 +63,7 @@ const getPost = async (id) => {
   }));
 };
 
+//----------------------------------------------------------------------------
 // Add a new post to the server
 const addPost = async (post) => {
   return getJson(
@@ -71,6 +76,7 @@ const addPost = async (post) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Delete a post by ID
 const deletePost = async (id) => {
   return getJson(
@@ -81,7 +87,9 @@ const deletePost = async (id) => {
   );
 };
 
-// --- COMMENTS ---
+//############################################################################
+// COMMENTS
+//############################################################################
 
 // Fetch all comments for a specific post (public endpoint)
 const getComments = async (postId) => {
@@ -93,6 +101,7 @@ const getComments = async (postId) => {
   })));
 };
 
+//----------------------------------------------------------------------------
 // Add a new comment to a post
 const addComment = async (postId, text) => {
   return getJson(
@@ -105,6 +114,7 @@ const addComment = async (postId, text) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Edit an existing comment by ID
 const editComment = async (commentId, text) => {
   return getJson(
@@ -117,6 +127,7 @@ const editComment = async (commentId, text) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Delete a comment by ID
 const deleteComment = async (commentId) => {
   return getJson(
@@ -127,7 +138,9 @@ const deleteComment = async (commentId) => {
   );
 };
 
-// --- INTERESTING FLAGS ---
+//############################################################################
+// INTERESTING COMMENTS
+//############################################################################
 
 // Mark a comment as interesting
 const setInteresting = async (commentId) => {
@@ -139,6 +152,7 @@ const setInteresting = async (commentId) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Unmark a comment as interesting
 const unsetInteresting = async (commentId) => {
   return getJson(
@@ -149,7 +163,9 @@ const unsetInteresting = async (commentId) => {
   );
 };
 
-// --- AUTHENTICATION & 2FA ---
+//############################################################################
+// AUTHENTICATION and 2FAs
+//############################################################################
 
 // Log in a user with credentials
 const logIn = async (credentials) => {
@@ -163,6 +179,7 @@ const logIn = async (credentials) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Verify a TOTP code for 2FA
 const logInTotp = async (code) => {
   return getJson(
@@ -175,6 +192,7 @@ const logInTotp = async (code) => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Log out the current user
 const logOut = async () => {
   return getJson(
@@ -185,6 +203,7 @@ const logOut = async () => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Fetch information about the currently logged-in user
 const getUserInfo = async () => {
   return getJson(
@@ -194,6 +213,7 @@ const getUserInfo = async () => {
   );
 };
 
+//----------------------------------------------------------------------------
 // Export all API functions
 const API = {
   getPosts,
@@ -212,4 +232,5 @@ const API = {
   getUserInfo,
 };
 
+//----------------------------------------------------------------------------
 export default API;
