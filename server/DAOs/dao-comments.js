@@ -1,44 +1,4 @@
 const db = require('../db');
-const dayjs = require('dayjs');
-
-//--------------------------------------------------------------------------
-// List all comments for a specific post, with optional user authentication
-exports.listCommentsByPost = (post_id, user_id = null) => {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT 
-        c.id,
-        c.post_id,
-        c.author_id,
-        u.name AS author,
-        c.text,
-        c.timestamp,
-        (
-          SELECT COUNT(*) 
-          FROM comment_interesting_flags f 
-          WHERE f.comment_id = c.id
-        ) AS interesting_count,
-        (
-          SELECT EXISTS(
-            SELECT 1 
-            FROM comment_interesting_flags f 
-            WHERE f.comment_id = c.id AND f.user_id = ?
-          )
-        ) AS interesting
-      FROM comments c
-      LEFT JOIN users u ON c.author_id = u.id
-      WHERE c.post_id = ?
-      ORDER BY datetime(c.timestamp) DESC
-    `;
-    db.all(sql, [user_id || 0, post_id], (err, rows) => {
-      if (err) reject(err);
-      else {
-        rows.forEach(r => r.timestamp = dayjs(r.timestamp).format('YYYY-MM-DD HH:mm:ss'));
-        resolve(rows);
-      }
-    });
-  });
-};
 
 //--------------------------------------------------------------------------
 // Add a new comment to a post

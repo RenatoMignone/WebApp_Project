@@ -34,8 +34,7 @@ function PostDetails({ post, user, showMessage }) {
     try {
       await API.deletePost(post.id);
       showMessage('Post deleted successfully!', 'success');
-      // The parent component will handle post list refresh and navigation
-      window.location.href = '/'; // Simple way to refresh the entire page
+      navigate('/');
     } catch (e) {
       showMessage(e?.error || 'Error deleting post');
     }

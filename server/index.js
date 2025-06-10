@@ -14,7 +14,6 @@ const TotpStrategy = require('passport-totp').Strategy;
 const daoUsers = require('./DAOs/dao-users');
 const daoPosts = require('./DAOs/dao-posts');
 const daoComments = require('./DAOs/dao-comments');
-const daoFlags = require('./DAOs/dao-flags');
 
 const { validationResult, body } = require('express-validator');
 
