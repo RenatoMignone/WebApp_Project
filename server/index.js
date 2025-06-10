@@ -11,10 +11,10 @@ const base32 = require('thirty-two');
 const LocalStrategy = require('passport-local');
 const TotpStrategy = require('passport-totp').Strategy;
 
-const daoUsers = require('./dao-users');
-const daoPosts = require('./dao-posts');
-const daoComments = require('./dao-comments');
-const daoFlags = require('./dao-flags');
+const daoUsers = require('./DAOs/dao-users');
+const daoPosts = require('./DAOs/dao-posts');
+const daoComments = require('./DAOs/dao-comments');
+const daoFlags = require('./DAOs/dao-flags');
 
 const { validationResult, body } = require('express-validator');
 
@@ -36,7 +36,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 ///----------------------------------------------------------------------------
-// Session management with SQLite store
+// Session management
 app.use(session({
   secret: "secret",
   resave: false,
@@ -70,6 +70,7 @@ passport.use(new TotpStrategy(
 
 //----------------------------------------------------------------------------
 // Serialize and deserialize user instances to support sessions
+// The serialization is used to store user ID in the session
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
@@ -137,9 +138,7 @@ app.post('/api/sessions', function(req, res, next) {
 // TOTP verification (2FA)
 app.post('/api/login-totp', isLoggedIn, function(req, res, next) {
   
-  if (!req.user.otp_secret) {
-    return res.status(400).json({ error: 'TOTP not enabled for this user' });
-  }
+  if (!req.user.otp_secret) return res.status(400).json({ error: 'TOTP not enabled for this user' });
 
   passport.authenticate('totp', function(err, user, info) {
     if (err) return next(err);
@@ -153,6 +152,7 @@ app.post('/api/login-totp', isLoggedIn, function(req, res, next) {
 
 //----------------------------------------------------------------------------
 // Get current session info
+// This one will be used at the beginning to check if the user is logged in too
 app.get('/api/sessions/current', (req, res) => {
   if (req.isAuthenticated()) {
     res.json(clientUserInfo(req));
@@ -201,9 +201,11 @@ app.get('/api/posts/:id/comments', async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
     const userId = req.user?.id || null; // Get user ID if authenticated, null otherwise
+    // Here we will use await because we need to wait for the comments to be fetched
     const comments = await daoComments.getCommentsByPost(postId, userId);
     
     // If user is not authenticated, filter to show only anonymous comments (author_id is null)
+    // we are so applying a filter based on the presente of the author id
     const filteredComments = !req.user 
       ? comments.filter(comment => comment.author_id === null || comment.author_id === undefined)
       : comments;
@@ -218,25 +220,46 @@ app.get('/api/posts/:id/comments', async (req, res) => {
 //----------------------------------------------------------------------------
 // POST /api/posts - Add a new post
 app.post('/api/posts', isLoggedIn, [
+  // Tese are the requirements of the fields in the form to add a new post
   body('title').isLength({min: 1}).withMessage('Title is required'),
   body('text').isLength({min: 1}).withMessage('Text is required'),
-  // Fix: Allow max_comments to be 0
-  body('max_comments').optional().isInt({min: 0}).withMessage('Max comments must be a non-negative integer')
+  body('max_comments').optional().custom((value) => {
+    // Allow empty string, null, undefined, or valid positive integers
+    if (value === '' || value === null || value === undefined) {
+      return true;
+    }
+    const num = parseInt(value);
+    if (isNaN(num) || num < 0) {
+      throw new Error('Max comments must be a non-negative integer or empty for unlimited');
+    }
+    return true;
+  })
 ], async (req, res) => {
+  // Validate the request body using express-validator
   const errors = validationResult(req);
+  // If there are validation errors, return them
   if (!errors.isEmpty()) {
     return res.status(400).json({error: errors.array()});
   }
 
   try {
+    // Handle max_comments: empty string or undefined should be null (unlimited)
+    let maxComments = req.body.max_comments;
+    if (maxComments === '' || maxComments === undefined) {
+      maxComments = null;
+    } else if (maxComments !== null) {
+      maxComments = parseInt(maxComments);
+      if (maxComments < 0) maxComments = null;
+    }
+
     const post = {
       title: req.body.title,
       text: req.body.text,
       author_id: req.user.id,
-      // Fix: Explicitly handle 0 value
-      max_comments: req.body.max_comments === 0 ? 0 : (req.body.max_comments || null)
+      max_comments: maxComments
     };
     
+    // Add the post inside the database
     const postId = await daoPosts.addPost(post);
     res.status(201).json({id: postId});
   } catch (err) {
@@ -249,11 +272,17 @@ app.post('/api/posts', isLoggedIn, [
 // DELETE /api/posts/:id - Delete a post (admin with 2FA only)
 app.delete('/api/posts/:id', isLoggedIn, async (req, res) => {
   try {
+    // We get the ID of the post from the URL parameter
     const post = await daoPosts.getPostById(req.params.id);
+
+    // If the post does not exist, return 404
     if (!post) return res.status(404).json({ error: 'Post not found' });
+
     // Only author or admin with TOTP can delete
     if (String(post.author_id) !== String(req.user.id) && !(req.user.is_admin && req.session.secondFactor === 'totp'))
       return res.status(403).json({ error: 'Forbidden' });
+
+    // If the user is authorized, delete the post
     await daoPosts.deletePost(req.params.id);
     res.status(204).end();
   } catch (err) {
@@ -265,18 +294,24 @@ app.delete('/api/posts/:id', isLoggedIn, async (req, res) => {
 // Add a comment (anyone, anonymous if not logged in)
 app.post('/api/posts/:id/comments', async (req, res) => {
   try {
+    // We get the text of the comment from the request body
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Missing text' });
+
+    // We get the post by means of the ID in the URL parameter
     const post = await daoPosts.getPostById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
+
     // Check max comments
     if (post.max_comments && post.comments_count >= post.max_comments)
       return res.status(400).json({ error: 'Max comments reached' });
+
     const comment = {
       post_id: req.params.id,
       author_id: req.isAuthenticated() ? req.user.id : null,
       text
     };
+
     const id = await daoComments.addComment(comment);
     res.status(201).json({ id });
   } catch (err) {
@@ -290,8 +325,11 @@ app.put('/api/comments/:id', isLoggedIn, async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Missing text' });
+
+    // We check if the user is the author of the comment or an admin with 2FA
     const is_admin = req.user.is_admin && req.session.secondFactor === 'totp';
     const changes = await daoComments.editComment(req.params.id, text, req.user.id, is_admin);
+    
     if (changes === 0) return res.status(403).json({ error: 'Forbidden' });
     res.status(200).json({ success: true });
   } catch (err) {
@@ -300,7 +338,7 @@ app.put('/api/comments/:id', isLoggedIn, async (req, res) => {
 });
 
 //----------------------------------------------------------------------------
-// DELETE /api/comments/:id - Delete a comment (admin with 2FA only)
+// Delete a comment (admin with 2FA only)
 app.delete('/api/comments/:id', isLoggedIn, async (req, res) => {
   try {
     const is_admin = req.user.is_admin && req.session.secondFactor === 'totp';
@@ -313,7 +351,7 @@ app.delete('/api/comments/:id', isLoggedIn, async (req, res) => {
 });
 
 //----------------------------------------------------------------------------
-// POST /api/comments/:id/interesting - Mark a comment as interesting (authentication required)
+// Mark a comment as interesting (authentication required)
 app.post('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
     const commentId = parseInt(req.params.id);
@@ -326,7 +364,8 @@ app.post('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   }
 });
 
-// DELETE /api/comments/:id/interesting - Remove interesting mark from comment (authentication required)
+//----------------------------------------------------------------------------
+// Remove interesting mark from comment (authentication required)
 app.delete('/api/comments/:id/interesting', isLoggedIn, async (req, res) => {
   try {
     const commentId = parseInt(req.params.id);

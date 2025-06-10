@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../db');
 const crypto = require('crypto');
 
 
@@ -6,11 +6,14 @@ const crypto = require('crypto');
 // Get user based on the ID
 exports.getUserById = (id) => {
   return new Promise((resolve, reject) => {
+    
+    // We get the user but we do not retrieve the password hash or salt
     const sql = `
       SELECT id, username, name, is_admin, otp_secret
       FROM users
       WHERE id = ?
     `;
+
     db.get(sql, [id], (err, row) => {
       if (err) reject(err);
       else if (!row) resolve(undefined);
@@ -45,6 +48,7 @@ exports.getUser = (username, password) => {
           if (err) reject(err);
           if (!crypto.timingSafeEqual(Buffer.from(row.hash, 'hex'), hashedPassword))
             resolve(false);
+          // Here we resolve the user only if the password matches
           else {
             const user = {
               id: row.id,

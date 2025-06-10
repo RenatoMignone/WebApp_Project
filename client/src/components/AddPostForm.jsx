@@ -15,7 +15,7 @@ function AddPostForm({ onPostsChange, showMessage }) {
   // ###########################################################################
   // STATE MANAGEMENT
   // ###########################################################################
-  
+
   // State to manage the title input
   const [title, setTitle] = useState('');
   // State to manage the content input
@@ -36,12 +36,15 @@ function AddPostForm({ onPostsChange, showMessage }) {
       showMessage('Title and text are required');
       return;
     }
-    
+
     try {
+      // Handle max_comments: empty string should be null (unlimited)
+      const maxCommentsValue = maxComments.trim() === '' ? null : Number(maxComments);
+      
       await API.addPost({ 
         title, 
         text, 
-        max_comments: maxComments ? Number(maxComments) : null 
+        max_comments: maxCommentsValue
       });
       
       // Refresh posts list

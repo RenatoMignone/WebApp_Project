@@ -34,6 +34,7 @@ function App() {
 
   const navigate = useNavigate();
 
+  //----------------------------------------------------------------------------
   // Check session on mount
   useEffect(() => {
     API.getUserInfo()
@@ -43,6 +44,9 @@ function App() {
 
   //############################################################################
   // --- Authentication handlers ---
+
+  // So if the user can do the TOTP check, then we set the state to require TOTP
+  // and store the pending admin user data for later verification.
   async function handleLogin(credentials) {
     try {
       const res = await API.logIn(credentials);
@@ -140,17 +144,17 @@ function App() {
                 {/* Individual post view */}
               </div>} 
           />
-          {/*Route for the Login*/}
-          <Route path="/login"element={
-              !user ? (
-                <LoginLayout onLogin={handleLogin} totpRequired={totpRequired} onTotp={handleTotp} onSkipTotp={handleSkipTotp}/>
-              ) : (
-                <Navigate replace to='/' />
-              )
-          }/>
-
-          <Route path="*" element={<NotFoundLayout />}/>
         </Route>
+        {/*Route for the Login*/}
+        <Route path="/login"element={
+            !user ? (
+              <LoginLayout onLogin={handleLogin} totpRequired={totpRequired} onTotp={handleTotp} onSkipTotp={handleSkipTotp}/>
+            ) : (
+              <Navigate replace to='/' />
+            )
+        }/>
+        {/*Route for the 404 not found page*/}
+        <Route path="*" element={<NotFoundLayout />}/>
       </Routes>
     </div>
   );
