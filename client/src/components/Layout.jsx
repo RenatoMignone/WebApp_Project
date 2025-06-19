@@ -20,9 +20,6 @@ function NotFoundLayout() {
       <Col xs={12} md={8} className="text-center">
         <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
           <div className="card-body p-5">
-            <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px', background: 'linear-gradient(45deg, #dc2626, #ef4444)' }}>
-              <i className="bi bi-exclamation-triangle-fill text-white" style={{ fontSize: '3rem' }}></i>
-            </div>
             <h2 className="text-danger mb-4 fw-bold">404 - Page Not Found</h2>
             <p className="lead text-muted mb-4">
               Sorry, the page you are looking for doesn't exist or has been moved.
@@ -100,12 +97,14 @@ function PostDetailsLayout({ user, selectedPost, showMessage }) {
       <Col>
         {selectedPost ? (
           <>
+            {/* Part related to the Post Details */}
             <PostDetails 
               post={selectedPost} 
               user={user} 
               showMessage={showMessage}
             />
             <hr />
+            {/* Part for the list of comments of one post */}
             <CommentList
               comments={comments}
               user={user}
@@ -113,6 +112,7 @@ function PostDetailsLayout({ user, selectedPost, showMessage }) {
               onCommentsChange={setComments}
               showMessage={showMessage}
             />
+            {/* Add a comment on a specific post*/}
             <AddCommentForm 
               user={user} 
               post={selectedPost} 
@@ -122,6 +122,7 @@ function PostDetailsLayout({ user, selectedPost, showMessage }) {
           </>
         ) : (
           <div className="text-center py-5">
+            {/* Displayed when the user has not selected any post yet */}
             <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px' }}>
               <div className="card-body p-5">
                 <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px', background: 'linear-gradient(45deg, #1e40af, #3b82f6)' }}>

@@ -91,9 +91,6 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
               <h2 className="fw-bold" style={{ color: '#1e40af' }}>
                 {totpRequired ? 'Two-Factor Authentication' : 'Welcome Back'}
               </h2>
-              <p className="text-muted">
-                {totpRequired ? 'Enter your TOTP code for full admin access, or skip to continue as a regular user' : 'Please sign in to your account'}
-              </p>
             </div>
             <Form onSubmit={handleSubmit}>
               {/* Display error messages */}
@@ -153,7 +150,6 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                   </Form.Group>
                   <div className="alert alert-info border-0 shadow-sm mb-4" style={{ borderRadius: '10px' }}>
                     <small>
-                      <i className="bi bi-info-circle-fill me-2"></i>
                       Complete 2FA for full admin privileges, or skip to continue with limited access.
                     </small>
                   </div>
@@ -178,7 +174,6 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                   </>
                 ) : (
                   <>
-                    <i className={`bi ${totpRequired ? 'bi-shield-check' : 'bi-box-arrow-in-right'} me-2`}></i>
                     {totpRequired ? 'Verify' : 'Sign In'}
                   </>
                 )}

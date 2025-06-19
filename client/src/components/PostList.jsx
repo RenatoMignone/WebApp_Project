@@ -38,6 +38,8 @@ function PostList({ posts, setPosts, onSelectPost, selectedPost, user, showMessa
       <div className="p-3 rounded-top text-white shadow-sm" style={{ background: 'linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)' }}>
         <h5 className="mb-0 fw-bold"><i className="bi bi-list-ul me-2"></i> Forum Posts</h5>
       </div>
+      
+      {/* Took the ListGroup component of bootstrap to display the list of posts */}
       <ListGroup variant="flush" className="shadow-sm">
         {sortedPosts.map(post => (
           <ListGroup.Item

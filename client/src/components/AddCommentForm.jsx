@@ -48,7 +48,7 @@ function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
       setText('');                  // Clear the input field after submission
       showMessage('Comment added successfully!', 'success');
     } catch (e) {
-      showMessage(e?.response?.data?.error || 'Error adding comment');
+      showMessage(e?.response?.data?.error || 'Error adding comhttps://totp.danhersam.com/ment');
     }
   };
 
@@ -80,7 +80,6 @@ function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
         <div className="card-body p-4">
           {/* Header for the comment form */}
           <h6 className="mb-3 fw-bold" style={{ color: '#1e40af' }}>
-            <i className="bi bi-chat-left-dots-fill me-2"></i>
             {user ? "Add Your Comment" : "Add Anonymous Comment"}
           </h6>
 

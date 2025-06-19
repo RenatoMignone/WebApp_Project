@@ -36,6 +36,8 @@ function App() {
 
   //----------------------------------------------------------------------------
   // Check session on mount
+  // This effect runs once when the component mounts to check if the user is logged in
+  // this is given by the fact that there is no value inside the dependencies array
   useEffect(() => {
     API.getUserInfo()
       .then(u => setUser(u))

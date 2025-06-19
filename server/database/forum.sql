@@ -14,35 +14,36 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Posts table: stores forum posts/topics created by users
 CREATE TABLE IF NOT EXISTS posts (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,    -- Unique post identifier
-  title        TEXT    NOT NULL UNIQUE,              -- Post title (must be unique)
-  author_id    INTEGER NOT NULL,                     -- ID of the user who created the post
-  text         TEXT    NOT NULL,                     -- Main content/body of the post
-  max_comments INTEGER,                              -- Maximum number of comments allowed on this post
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,          -- Unique post identifier
+  title        TEXT    NOT NULL UNIQUE,                    -- Post title (must be unique)
+  author_id    INTEGER NOT NULL,                           -- ID of the user who created the post
+  text         TEXT    NOT NULL,                           -- Main content/body of the post
+  max_comments INTEGER,                                    -- Maximum number of comments allowed on this post
   timestamp    TEXT    NOT NULL DEFAULT (datetime('now')), -- When the post was created
-  FOREIGN KEY(author_id) REFERENCES users(id)       -- Links to the user who created the post
+  FOREIGN KEY(author_id) REFERENCES users(id)              -- Links to the user who created the post
 );
 
 -- Comments table: stores user comments on posts
 CREATE TABLE IF NOT EXISTS comments (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,      -- Unique comment identifier
-  post_id   INTEGER NOT NULL,                       -- ID of the post this comment belongs to
-  author_id INTEGER,                                -- ID of the user who wrote the comment (NULL for anonymous)
-  text      TEXT    NOT NULL,                       -- Comment content/text
-  timestamp TEXT    NOT NULL DEFAULT (datetime('now')), -- When the comment was posted
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,                   -- Unique comment identifier
+  post_id   INTEGER NOT NULL,                                    -- ID of the post this comment belongs to
+  author_id INTEGER,                                             -- ID of the user who wrote the comment (NULL for anonymous)
+  text      TEXT    NOT NULL,                                    -- Comment content/text
+  timestamp TEXT    NOT NULL DEFAULT (datetime('now')),          -- When the comment was posted
   FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,   -- Links to parent post, deletes comment if post is deleted
-  FOREIGN KEY(author_id) REFERENCES users(id)       -- Links to comment author (optional for anonymous comments)
+  FOREIGN KEY(author_id) REFERENCES users(id)                    -- Links to comment author (optional for anonymous comments)
 );
 
 -- Comment flags table: stores which users have flagged comments as "interesting"
 CREATE TABLE IF NOT EXISTS comment_interesting_flags (
-  user_id    INTEGER NOT NULL,                      -- ID of the user who flagged the comment
-  comment_id INTEGER NOT NULL,                      -- ID of the comment being flagged
-  PRIMARY KEY(user_id, comment_id),                 -- Composite primary key prevents duplicate flags
+  user_id    INTEGER NOT NULL,                                        -- ID of the user who flagged the comment
+  comment_id INTEGER NOT NULL,                                        -- ID of the comment being flagged
+  PRIMARY KEY(user_id, comment_id),                                   -- Composite primary key prevents duplicate flags
   FOREIGN KEY(user_id)    REFERENCES users(id)    ON DELETE CASCADE,  -- Remove flags if user is deleted
   FOREIGN KEY(comment_id) REFERENCES comments(id) ON DELETE CASCADE   -- Remove flags if comment is deleted
 );
 
+------------------------------------------------------------------------------------------------------------------------------
 -- Sample data insertion: Create 5 test users (2 admins, 3 regular users)
 -- All users have the same password 'pwdw' hashed with salt for testing purposes
 -- Admin users have OTP secrets configured for two-factor authentication

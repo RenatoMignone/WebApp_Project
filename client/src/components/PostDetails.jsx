@@ -96,13 +96,11 @@ function PostDetails({ post, user, showMessage }) {
             <div className="row g-3">
               <div className="col-md-6">
                 <div className="d-flex align-items-center text-muted">
-                  <i className="bi bi-calendar3 me-2 text-primary"></i>
                   <span>{post.timestamp && dayjs(post.timestamp).format('YYYY-MM-DD HH:mm')}</span>
                 </div>
               </div>
               <div className="col-md-6">
                 <div className="d-flex align-items-center text-muted">
-                  <i className="bi bi-chat-left-text me-2 text-primary"></i>
                   <span>Max Comments: {post.max_comments ?? '∞'}</span>
                 </div>
               </div>

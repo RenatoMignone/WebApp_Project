@@ -54,6 +54,7 @@ exports.getCommentsByPost = (postId, userId = null) => {
     let sql;
     let params;
     
+    // Check if userId is provided to determine if we need to include interesting flags
     if (userId) {
       // Authenticated user - include interesting flag
       sql = `
