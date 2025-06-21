@@ -1,10 +1,3 @@
-// -----------------------------------------------------------------------------
-// NavigationBar Component
-// -----------------------------------------------------------------------------
-// This component provides a fixed navigation bar at the top of the application.
-// It displays the app title, user information (if logged in), and login/logout buttons.
-// -----------------------------------------------------------------------------
-
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 

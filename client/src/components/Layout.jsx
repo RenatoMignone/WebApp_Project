@@ -65,29 +65,32 @@ function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp }) {
 }
 
 //------------------------------------------------------------------------
-// --- Add Post Layout ---
-function AddPostLayout({ user, onAddPost }) {
-  return (
-    <Row>
-      <Col>
-        {user && <AddPostForm onAdd={onAddPost} />}
-      </Col>
-    </Row>
-  );
-}
-
-//------------------------------------------------------------------------
 // --- Post Details Layout ---
-function PostDetailsLayout({ user, selectedPost, showMessage }) {
+function PostDetailsLayout({ user, selectedPost, showMessage, onPostDeleted }) {
   const [comments, setComments] = useState([]);
+  const [currentPost, setCurrentPost] = useState(null);
 
-  // Load comments when a post is selected
+  // Load post details and comments when a post is selected
+  // This effect will run when the selectedPost changes or when the showMessage function changes
   useEffect(() => {
     if (selectedPost) {
-      API.getComments(selectedPost.id)
-        .then(setComments)
-        .catch(() => showMessage('Error loading comments'));
+      // Fetch the latest post data to ensure it's up to date
+      API.getPost(selectedPost.id)
+        .then(post => {
+          if (post) {
+            setCurrentPost(post);
+            return API.getComments(post.id);
+          } else {
+            // Post might have been deleted
+            setCurrentPost(null);
+            setComments([]);
+            showMessage('Post not found or has been deleted', 'warning');
+            return [];
+          }
+        })
+        .then(setComments);
     } else {
+      setCurrentPost(null);
       setComments([]);
     }
   }, [selectedPost, showMessage]);
@@ -95,31 +98,44 @@ function PostDetailsLayout({ user, selectedPost, showMessage }) {
   return (
     <Row>
       <Col>
-        {selectedPost ? (
+        {currentPost ? (
           <>
             {/* Part related to the Post Details */}
             <PostDetails 
-              post={selectedPost} 
+              post={currentPost} 
               user={user} 
               showMessage={showMessage}
+              onPostDeleted={onPostDeleted}
             />
             <hr />
             {/* Part for the list of comments of one post */}
             <CommentList
               comments={comments}
               user={user}
-              selectedPost={selectedPost}
+              selectedPost={currentPost}
               onCommentsChange={setComments}
               showMessage={showMessage}
             />
             {/* Add a comment on a specific post*/}
             <AddCommentForm 
               user={user} 
-              post={selectedPost} 
+              post={currentPost} 
               onCommentsChange={setComments}
               showMessage={showMessage}
             />
           </>
+          
+        ) : selectedPost ? (
+          <div className="text-center py-5">
+            <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px' }}>
+              <div className="card-body p-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-3 text-muted">Loading post details...</p>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="text-center py-5">
             {/* Displayed when the user has not selected any post yet */}
@@ -156,6 +172,17 @@ function ForumLayout({ user, message, messageType = 'danger', onLogout, showMess
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const location = useLocation();
+
+  // Handle post deletion - refresh posts list and clear selection
+  const handlePostDeleted = async () => {
+    try {
+      const updatedPosts = await API.getPosts();
+      setPosts(updatedPosts);
+      setSelectedPost(null);
+    } catch (err) {
+      showMessage('Error refreshing posts list');
+    }
+  };
 
   //----------------------------------------------------------------------------
   return (
@@ -211,6 +238,7 @@ function ForumLayout({ user, message, messageType = 'danger', onLogout, showMess
               user={user}
               selectedPost={selectedPost}
               showMessage={showMessage}
+              onPostDeleted={handlePostDeleted}
             />
           )}
         </Col>
@@ -220,5 +248,5 @@ function ForumLayout({ user, message, messageType = 'danger', onLogout, showMess
 }
 
 //-----------------------------------------------------------------------------
-export { NotFoundLayout, LoginLayout, AddPostLayout, ForumLayout };
+export { NotFoundLayout, LoginLayout, ForumLayout };
 export default ForumLayout;

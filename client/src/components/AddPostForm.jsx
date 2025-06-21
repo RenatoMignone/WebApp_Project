@@ -1,20 +1,8 @@
-// -----------------------------------------------------------------------------
-// AddPostForm Component
-// -----------------------------------------------------------------------------
-// This component renders a form that allows users to add new posts to the forum.
-// Users can specify a title, content, and an optional maximum number of comments.
-// The form validates required fields and resets after submission.
-// -----------------------------------------------------------------------------
-
 import { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import API from '../API';
 
 function AddPostForm({ onPostsChange, showMessage }) {
-
-  // ###########################################################################
-  // STATE MANAGEMENT
-  // ###########################################################################
 
   // State to manage the title input
   const [title, setTitle] = useState('');

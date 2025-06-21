@@ -1,22 +1,8 @@
-// -----------------------------------------------------------------------------
-// AddCommentForm Component
-// -----------------------------------------------------------------------------
-// This component renders a form that allows users to add comments to a specific post.
-// - Authenticated users can add comments with their identity.
-// - Anonymous users can add comments without authentication.
-// - The form dynamically adjusts its placeholder and button text based on the user's authentication status.
-// - Commenting can be disabled by the post author (max_comments = 0).
-// -----------------------------------------------------------------------------
-
 import { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import API from '../API';
 
 function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
-
-  // ###########################################################################
-  // STATE MANAGEMENT
-  // ###########################################################################
 
   // State to manage the text input for the comment
   const [text, setText] = useState('');
@@ -24,8 +10,9 @@ function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
   // If no post is selected, do not render the form
   if (!post) return null;
 
-  // Check if commenting is disabled (max_comments = 0)
-  const isCommentingDisabled = post.max_comments === 0;
+  // Check if commenting is disabled (max_comments = 0) or max comments reached
+  const isCommentingDisabled = post.max_comments === 0 || 
+    (post.max_comments && post.comments_count >= post.max_comments);
 
   // ############################################################################
   // HANDLERS
@@ -48,7 +35,7 @@ function AddCommentForm({ user, post, onCommentsChange, showMessage }) {
       setText('');                  // Clear the input field after submission
       showMessage('Comment added successfully!', 'success');
     } catch (e) {
-      showMessage(e?.response?.data?.error || 'Error adding comhttps://totp.danhersam.com/ment');
+      showMessage(e?.response?.data?.error || 'Error adding comment');
     }
   };
 

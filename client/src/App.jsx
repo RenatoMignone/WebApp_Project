@@ -15,7 +15,6 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { ForumLayout, LoginLayout, NotFoundLayout } from './components/Layout';
 
 //----------------------------------------------------------------------------
-// --- Main App ---
 function App() {
 
   //----------------------------------------------------------------------------
@@ -43,9 +42,6 @@ function App() {
       .then(u => setUser(u))
       .catch(() => setUser(null));
   }, []);
-
-  //############################################################################
-  // --- Authentication handlers ---
 
   // So if the user can do the TOTP check, then we set the state to require TOTP
   // and store the pending admin user data for later verification.
@@ -131,32 +127,9 @@ function App() {
   return (
     <div className="px-3 py-4" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%)' }}>
       <Routes>
-        <Route path="/" element={
-            <ForumLayout user={user} message={message} messageType={messageType} onLogout={handleLogout} showMessage={showMessage}/>}>
-          
-          {/* Nested routes for posts and comments */}
-          <Route index element={
-              <div>
-                {/* Main forum view - shows post list and details */}
-              </div>}
-          />
-          {/* Route for creating a new post */}
-          <Route path="post/:postId" element={
-              <div>
-                {/* Individual post view */}
-              </div>} 
-          />
-        </Route>
-        {/*Route for the Login*/}
-        <Route path="/login"element={
-            !user ? (
-              <LoginLayout onLogin={handleLogin} totpRequired={totpRequired} onTotp={handleTotp} onSkipTotp={handleSkipTotp}/>
-            ) : (
-              <Navigate replace to='/' />
-            )
-        }/>
-        {/*Route for the 404 not found page*/}
-        <Route path="*" element={<NotFoundLayout />}/>
+        <Route path="/login" element={<LoginLayout onLogin={handleLogin} totpRequired={totpRequired} onTotp={handleTotp} onSkipTotp={handleSkipTotp} />} />
+        <Route path="/" element={<ForumLayout user={user} message={message} messageType={messageType} onLogout={handleLogout} showMessage={showMessage} />} />
+        <Route path="*" element={<NotFoundLayout />} />
       </Routes>
     </div>
   );

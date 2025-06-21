@@ -1,11 +1,3 @@
-// -----------------------------------------------------------------------------
-// API Module
-// -----------------------------------------------------------------------------
-// This file defines the API module, which provides functions to interact with
-// the server. It includes methods for managing posts, comments, authentication,
-// and 2FA.
-// -----------------------------------------------------------------------------
-
 import dayjs from 'dayjs';
 
 const SERVER_URL = 'http://localhost:3001/api/';

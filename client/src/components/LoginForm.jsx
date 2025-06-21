@@ -1,19 +1,8 @@
-// -----------------------------------------------------------------------------
-// LoginForm Component
-// -----------------------------------------------------------------------------
-// This component provides a form for user authentication. It supports both
-// standard login with username and password and TOTP-based 2FA verification.
-// -----------------------------------------------------------------------------
-
 import { useState } from 'react';
 import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
-
-  // ###########################################################################
-  // STATE MANAGEMENT
-  // ###########################################################################
 
   // state for the username
   const [username, setUsername] = useState('');

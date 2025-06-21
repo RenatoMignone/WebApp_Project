@@ -11,6 +11,7 @@ const base32 = require('thirty-two');
 const LocalStrategy = require('passport-local');
 const TotpStrategy = require('passport-totp').Strategy;
 
+// Import the Data Access Objects (DAOs) for users, posts, and comments
 const daoUsers = require('./DAOs/dao-users');
 const daoPosts = require('./DAOs/dao-posts');
 const daoComments = require('./DAOs/dao-comments');
@@ -217,9 +218,9 @@ app.get('/api/posts/:id/comments', async (req, res) => {
 });
 
 //----------------------------------------------------------------------------
-// POST /api/posts - Add a new post
+// POST /api/posts - Add a new post (authentication required)
 app.post('/api/posts', isLoggedIn, [
-  // Tese are the requirements of the fields in the form to add a new post
+  // These are the validation requirements for the form fields
   body('title').isLength({min: 1}).withMessage('Title is required'),
   body('text').isLength({min: 1}).withMessage('Text is required'),
   body('max_comments').optional().custom((value) => {
@@ -263,7 +264,11 @@ app.post('/api/posts', isLoggedIn, [
     res.status(201).json({id: postId});
   } catch (err) {
     console.error('Error adding post:', err);
-    res.status(500).json({error: 'Database error'});
+    if (err.message === 'A post with this title already exists') {
+      res.status(400).json({error: err.message});
+    } else {
+      res.status(500).json({error: 'Database error'});
+    }
   }
 });
 
@@ -301,9 +306,9 @@ app.post('/api/posts/:id/comments', async (req, res) => {
     const post = await daoPosts.getPostById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // Check max comments
-    if (post.max_comments && post.comments_count >= post.max_comments)
-      return res.status(400).json({ error: 'Max comments reached' });
+    // Check max comments (including max_comments = 0 which disables comments)
+    if (post.max_comments === 0 || (post.max_comments && post.comments_count >= post.max_comments))
+      return res.status(400).json({ error: 'Comments are disabled or maximum comments reached for this post' });
 
     const comment = {
       post_id: req.params.id,

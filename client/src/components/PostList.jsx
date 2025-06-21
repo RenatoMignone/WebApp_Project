@@ -1,10 +1,3 @@
-// -----------------------------------------------------------------------------
-// PostList Component
-// -----------------------------------------------------------------------------
-// This component displays a list of posts. It allows users to select a post to
-// view its details and comments. Posts are sorted by timestamp in descending order.
-// -----------------------------------------------------------------------------
-
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { ListGroup, Badge } from 'react-bootstrap';

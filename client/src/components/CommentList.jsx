@@ -1,10 +1,3 @@
-// -----------------------------------------------------------------------------
-// CommentList Component
-// -----------------------------------------------------------------------------
-// This component displays a list of comments for a post. It includes functionality
-// for editing, deleting, and marking comments as interesting.
-// -----------------------------------------------------------------------------
-
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { Button } from 'react-bootstrap';
@@ -12,10 +5,6 @@ import API from '../API';
 
 function CommentList({ comments, user, selectedPost, onCommentsChange, showMessage }) {
 
-  // ###########################################################################
-  // STATE MANAGEMENT
-  // ###########################################################################
-  
   // State to track the currently editing comment
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
@@ -160,7 +149,7 @@ function CommentList({ comments, user, selectedPost, onCommentsChange, showMessa
                       style={{ borderRadius: '10px', background: '#f8fafc' }}
                     />
 
-                    {/* Display the character count */}
+                    {/* Action buttons for save/cancel */}
                     <div>
                       <Button type="submit" variant="success" size="sm" className="me-2" style={{ borderRadius: '20px' }}>
                         <i className="bi bi-check-lg me-1"></i>

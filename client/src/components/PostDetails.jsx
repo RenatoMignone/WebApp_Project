@@ -1,21 +1,14 @@
-// -----------------------------------------------------------------------------
-// PostDetails Component
-// -----------------------------------------------------------------------------
-// This component displays detailed information about a selected post. It includes
-// functionality for deleting the post if the user has the necessary permissions.
-// -----------------------------------------------------------------------------
-
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { Card, Modal, Button } from 'react-bootstrap';
 import API from '../API';
+import { useNavigate } from 'react-router-dom';
 
-function PostDetails({ post, user, showMessage }) {
+function PostDetails({ post, user, showMessage, onPostDeleted }) {
 
-  // ###########################################################################
-  // STATE MANAGEMENT
-  // ###########################################################################
+  // State to manage the visibility of the delete confirmation modal
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   if (!post) return null;
 
@@ -34,9 +27,13 @@ function PostDetails({ post, user, showMessage }) {
     try {
       await API.deletePost(post.id);
       showMessage('Post deleted successfully!', 'success');
+      // Call the callback to refresh posts list and clear selection
+      if (onPostDeleted) {
+        onPostDeleted();
+      }
       navigate('/');
     } catch (e) {
-      showMessage(e?.error || 'Error deleting post');
+      showMessage(e?.response?.data?.error || 'Error deleting post');
     }
     setShowModal(false);
   };
